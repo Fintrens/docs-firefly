@@ -15,9 +15,9 @@ Profit/Loss|31,45,889|% of Loss Trades|59%|
 |||Avg Loss per trade|-12,403|
 
 ### Result
-|||
+
+|Product|Stock Futures|
 |:-:|:-:|
-|product|Stock Futures|
 |Back Test Time period|01/05/2022 - 30/04/2023|
 |Capital |50,00,000|
 |Total Profit/Loss|31,45,889|

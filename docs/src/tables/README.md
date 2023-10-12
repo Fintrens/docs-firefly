@@ -16,9 +16,9 @@ Nifty lots | 1,50,000  |Avg Loss per trade | -23,952  |
 BNF lots | 2,00,000  |
 
 ### Result
-|||
+
+|Product|Index Futures|
 |:-|:-:|
-|product|Index Futures|
 |Back Test Time period|01/05/2018 - 30/04/2023|
 |Capital |50,00,000|
 |Total Profit/Loss|1,79,63,300|
@@ -28,7 +28,7 @@ BNF lots | 2,00,000  |
 |% of Profit Trades|44.00|
 % of Loss Trades|56.00|
 |Avg Profit per trade|49,594|
-|Avg Loss per trade|-23,952
+|Avg Loss per trade|-23,952|
 
 ### Performance Chart
 
