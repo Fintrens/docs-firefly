@@ -1,0 +1,24 @@
+{
+  "name": "fireFly-vue",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "authors": {
+    "name": "",
+    "email": ""
+  },
+  "repository": "/fireFly-vue",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vuepress": "^1.5.3"
+  },
+  "dependencies": {
+    "@docsearch/js": "^3.5.2",
+    "@vuepress/plugin-docsearch": "^2.0.0-alpha.1",
+    "vuepress-plugin-smooth-scroll": "^0.0.10"
+  }
+}
