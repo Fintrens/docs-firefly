@@ -21,7 +21,7 @@ Profit/Loss|31,45,889|% of Loss Trades|59%|
 |Back Test Time period|01/05/2022 - 30/04/2023|
 |Capital |50,00,000|
 |Total Profit/Loss|31,45,889|
-|Absolute Returns % (5Y)|63%|
+|Absolute Returns %|63%|
 |Max Drawdown %|-13.22|
 |% of Profit Trades|41.00|
 % of Loss Trades|59.00|
