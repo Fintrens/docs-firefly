@@ -8,10 +8,10 @@ search: false
 
 |||||
 |:-|-|:-|-|
-Capital | 50,00,000  |Max Drawdown |-41741 |% |
+Capital | 50,00,000  |Max Drawdown |-41741.00 % |
 Trade size | 40,00,000  |% of Profit Trades |44% |
 Profit/Loss | 1,79,63,300  |% of Loss Trades |56% |
-Avg profit/month | 2,99,88  |Avg Profit per trade | 49,594  |
+Avg profit/month | 2,99,388  |Avg Profit per trade | 49,594  |
 Nifty lots | 1,50,000  |Avg Loss per trade | -23,952  |
 BNF lots | 2,00,000  |
 
