@@ -22,10 +22,9 @@ Profit/Loss|31,45,889|% of Loss Trades|59%|
 |Capital |50,00,000|
 |Total Profit/Loss|31,45,889|
 |Absolute Returns % (5Y)|63%|
-|Simple Annualized ROI|-13.22|
-|Max Drawdown %|41.00|
-|% of Profit Trades|59.00|
-% of Loss Trades|56.00|
+|Max Drawdown %|-13.22|
+|% of Profit Trades|41.00|
+% of Loss Trades|59.00|
 |Avg Profit per trade|23,219|
 |Avg Loss per trade|-12,403|
 
