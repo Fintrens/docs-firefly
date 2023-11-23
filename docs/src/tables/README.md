@@ -6,25 +6,22 @@ search: false
 
 ### Variables
 
-|||||
-|:-|-|:-|-|
-Capital | 50,00,000  |Max Drawdown |-41741.00 % |
-Trade size | 40,00,000  |% of Profit Trades |44% |
-Profit/Loss | 1,79,63,300  |% of Loss Trades |56% |
-Avg profit/month | 2,99,388  |Avg Profit per trade | 49,594  |
-Nifty lots | 1,50,000  |Avg Loss per trade | -23,952  |
+|||
+|:-|-:|
+Capital | 50,00,000  |
+Trade size | 40,00,000  |
+Nifty lots | 1,50,000  |
 BNF lots | 2,00,000  |
+|Back Test Time period|01/05/2018 - 30/04/2023|
 
 ### Result
 
 |Product|Index Futures|
-|:-|:-:|
-|Back Test Time period|01/05/2018 - 30/04/2023|
-|Capital |50,00,000|
+|:-|-:|
 |Total Profit/Loss|1,79,63,300|
-|Absolute Returns % (5Y)|359.27%|
-|Simple Annualized ROI|71.81%|
-|Max Drawdown %|-10.53
+|% of Absolute Returns (5Y)|359.27|
+|% of Simple Annualized ROI|71.81|
+|% of Max Drawdown|-10.53
 |% of Profit Trades|44.00|
 % of Loss Trades|56.00|
 |Avg Profit per trade|49,594|

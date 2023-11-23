@@ -6,23 +6,19 @@ search: false
 # Back Test Result - Stock Futures
 
 ### Variables
-|||||
-|:-|-|:-|-|
-Capital	|50,00,000|Max Drawdown|-13.22|
-Trade size|8,00,000|% of Profit Trades|	41%|	
-Profit/Loss|31,45,889|% of Loss Trades|59%|
-|||Avg Profit per trade|23,219|
-|||Avg Loss per trade|-12,403|
+|||
+|:-|-:|
+Capital	|50,00,000|
+Trade size|8,00,000|
+|Back Test Time period|01/05/2022 - 30/04/2023|
 
 ### Result
 
 |Product|Stock Futures|
-|:-:|:-:|
-|Back Test Time period|01/05/2022 - 30/04/2023|
-|Capital |50,00,000|
+|:-|-:|
 |Total Profit/Loss|31,45,889|
-|Absolute Returns %|63%|
-|Max Drawdown %|-13.22|
+|% of Absolute Returns|63|
+|% of Max Drawdown|-13.22|
 |% of Profit Trades|41.00|
 % of Loss Trades|59.00|
 |Avg Profit per trade|23,219|
