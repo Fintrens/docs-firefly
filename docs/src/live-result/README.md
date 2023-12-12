@@ -1,1 +1,1 @@
-![Screenshot of a Firefly Performance](/FireflyPerformance.jpg "TESING") 
+<liveResult src="/FireflyPerformance.jpg" alt="Firefly Performance" />
