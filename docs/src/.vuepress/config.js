@@ -70,7 +70,17 @@ module.exports = {
         link: 'https://web.sensibull.com/verified-pnl/merrymaking-boa',
         target:'_self',
         rel:false 
-        }
+        },
+        {
+          text: 'Live Result', 
+          link: '/live-result/',
+          },
+        {
+          text: 'About us', 
+          link: 'https://www.fintrens.com/',
+          target:'_self',
+          rel:false 
+          }
     ],
     sidebar: {
       '/guide/': [

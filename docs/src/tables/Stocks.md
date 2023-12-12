@@ -8,8 +8,7 @@ search: false
 ### Variables
 |||
 |:-|-:|
-Capital	|50,00,000|
-Trade size|8,00,000|
+|Capital	|50,00,000|
 |Back Test Time period|01/05/2022 - 30/04/2023|
 
 ### Result
