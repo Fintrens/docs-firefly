@@ -8,10 +8,7 @@ search: false
 
 |||
 |:-|-:|
-Capital | 50,00,000  |
-Trade size | 40,00,000  |
-Nifty lots | 1,50,000  |
-BNF lots | 2,00,000  |
+|Capital | 50,00,000  |
 |Back Test Time period|01/05/2018 - 30/04/2023|
 
 ### Result
