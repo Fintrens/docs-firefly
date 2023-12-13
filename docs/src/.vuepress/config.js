@@ -6,7 +6,7 @@ module.exports = {
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
-  title: 'FireFly',
+  title: 'Firefly',
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#description
    */
@@ -41,7 +41,6 @@ module.exports = {
     docsDir: '',
     editLinkText: '',
     lastUpdated: false,
-  //  searchPlaceholder: 'Search here...',
     
  /* algolia  : {
     appId: 'T1ZFHCPGT1',
