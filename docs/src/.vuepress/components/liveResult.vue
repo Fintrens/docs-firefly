@@ -26,13 +26,26 @@
     overflow: hidden;
 
   }
-   
-  .live-result-image img {
+  /* .live-result-image img {
 
     max-width: 150%;
     position: absolute;    
     left: 175px;
     display: block;
+  } */
 
+  @media screen and (min-width: 768px) {
+    .live-result-image img{
+      max-width: 150%;
+      position: absolute;    
+      left: 175px;
+      display: block;
+    }
+  }
+
+  @media screen and (max-width: 360px) {
+    .live-result-image img{
+      max-width: 100%;
+    }    
   }
   </style>
