@@ -24,15 +24,7 @@
     max-width: 100%;
     margin: 0 auto;
     overflow: hidden;
-
   }
-  /* .live-result-image img {
-
-    max-width: 150%;
-    position: absolute;    
-    left: 175px;
-    display: block;
-  } */
 
   @media screen and (min-width: 768px) {
     .live-result-image img{
