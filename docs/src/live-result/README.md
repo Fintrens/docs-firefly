@@ -1,1 +1,1 @@
-<liveResult src="/FireflyPerformance.jpg" alt="Firefly Performance" />
+<liveResult src="/FireflyPerformance_dec.jpg" alt="Firefly Performance" />

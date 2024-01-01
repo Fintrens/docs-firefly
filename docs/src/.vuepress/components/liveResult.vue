@@ -30,8 +30,11 @@
     .live-result-image img{
       max-width: 150%;
       position: absolute;    
-      left: 175px;
+      left: 0;
       display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
     }
   }
 
