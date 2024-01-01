@@ -6,10 +6,26 @@ search: false
 # Back Test Result - Stock Futures
 
 ### Variables
-|||
-|:-|-:|
-|Capital	|50,00,000|
-|Back Test Time period|01/05/2022 - 30/04/2023|
+<style>
+  td:first-child {
+    text-align: left;
+  }
+ 
+  td:last-child {
+    text-align: right;
+  }
+</style>
+ 
+<table>
+    <tr>
+    <td>Capital</td>
+    <td>50,00,000</td>
+    </tr>
+    <tr>
+    <td>Back Test Time period</td>
+    <td>01/05/2022 - 30/04/2023</td>
+    </tr>
+</table>
 
 ### Result
 
