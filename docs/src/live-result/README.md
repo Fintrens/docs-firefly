@@ -1,1 +1,1 @@
-<liveResult src="/FireflyPerformance_jan.jpg" alt="Firefly Performance" />
+![Image alt="Firefly Performance"](https://www.email.assets.fintrens.com/assets/ffp.jpg)
