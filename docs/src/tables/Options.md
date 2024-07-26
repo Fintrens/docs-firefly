@@ -44,6 +44,9 @@ search: false
 |	Calmer ratio	|	78.33	|
 |	Max drawdown days	|	24	|
 
+### Performance Chart
+
+![Screenshot of a result](/new_img.png)
 
 ### 5 Year Result From 01-01-2020 to 18-07-2024
 
