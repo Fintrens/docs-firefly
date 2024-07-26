@@ -70,10 +70,10 @@ module.exports = {
         target:'_self',
         rel:false 
         },
-        {
-          text: 'Live Result', 
-          link: '/live-result/',
-          },
+        // {
+        //   text: 'Live Result', 
+        //   link: '/live-result/',
+        //   },
         {
           text: 'About us', 
           link: 'https://www.fintrens.com/',
@@ -104,6 +104,7 @@ module.exports = {
           children: [
             '',
             'Stocks',
+            'Options',
           ]
         }
       ],
