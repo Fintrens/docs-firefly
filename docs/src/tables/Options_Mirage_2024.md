@@ -3,7 +3,7 @@ search: false
 ---
 
 
-# Back Test Result - Options - Mirage - 2024
+# Mirage - 2024
 
 <style>
   td:first-child {
