@@ -66,7 +66,7 @@ module.exports = {
       },
       {
         text: 'Verified Result',
-        link: 'https://web.sensibull.com/verified-pnl/merrymaking-boa',
+        link: 'https://web.sensibull.com/verified-pnl/chivalrous-sardine/1d1jrssPASS0HN',
         target: '_self',
         rel: false
       },
