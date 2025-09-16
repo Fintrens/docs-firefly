@@ -1,11 +1,8 @@
-# .github/workflows/build-deploy.yml
 name: Build & Deploy
 
 on:
   push:
-    branches:
-      - 'feature/**'
-      - 'master'
+    branches: [ master, dev ]   # master → prod, dev → qa
   workflow_dispatch:
 
 concurrency:
@@ -34,57 +31,87 @@ jobs:
       - name: Build (prod)
         run: npm run build
 
-      - name: Upload artifact
+      # Stage deploy assets (only the backup script)
+      - name: Collect deploy assets
+        working-directory: .
+        run: |
+          mkdir -p deploy-assets
+          cp scripts/remote-backup.sh deploy-assets/
+
+      # Artifacts for deploy job
+      - name: Upload site-dist
         uses: actions/upload-artifact@v4
         with:
           name: site-dist
-          # If your build outputs to docs/.vuepress/dist (typical):
           path: docs/.vuepress/dist
-          # If your project truly outputs to docs/src/.vuepress/dist, switch back.
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Upload deploy-assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-assets
+          path: deploy-assets
           if-no-files-found: error
           retention-days: 3
 
   deploy:
     needs: build
-    if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'feature/') }}
+    if: ${{ github.ref_name == 'master' || github.ref_name == 'dev' }}
     runs-on: ubuntu-latest
 
+    # Optional: keep environments if you use them
     environment:
       name: ${{ github.ref_name == 'master' && 'prod' || 'qa' }}
 
-    env:
-      SSH_HOST: ${{ github.ref_name == 'master' && secrets.SSH_HOST_PROD || secrets.SSH_HOST_QA }}
-      SSH_USER: ${{ github.ref_name == 'master' && secrets.SSH_USER_PROD || secrets.SSH_USER_QA }}
-      SSH_PORT: ${{ github.ref_name == 'master' && secrets.SSH_PORT_PROD || secrets.SSH_PORT_QA }}
-      SSH_PRIVATE_KEY: ${{ github.ref_name == 'master' && secrets.SSH_PRIVATE_KEY_PROD || secrets.SSH_PRIVATE_KEY_QA }}
-      REMOTE_PATH: ${{ github.ref_name == 'master' && secrets.REMOTE_PATH_PROD || secrets.REMOTE_PATH_QA }}
-
     steps:
-      - name: Download artifact
+      # Download artifacts
+      - name: Download site-dist
         uses: actions/download-artifact@v4
         with:
           name: site-dist
           path: dist
 
+      - name: Download deploy-assets
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-assets
+          path: deploy-assets
+
+      # SSH setup
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Trust server host key
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H -p "${SSH_PORT:-22}" "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H -p "${{ secrets.SSH_PORT || '22' }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
+      # 1) BACKUP current ${{ vars.REMOTE_PATH }}
+      - name: Upload remote-backup.sh
+        run: scp -P "${{ secrets.SSH_PORT || '22' }}" deploy-assets/remote-backup.sh \
+             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/remote-backup.sh"
+
+      - name: Run remote-backup.sh
+        run: |
+          ssh -p "${{ secrets.SSH_PORT || '22' }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "chmod +x /tmp/remote-backup.sh && /tmp/remote-backup.sh '${{ vars.REMOTE_PATH }}'"
+
+      # 2) UPLOAD DIST → ${{ vars.REMOTE_PATH }}
       - name: Ensure remote dir exists
-        run: ssh -p "${SSH_PORT:-22}" "$SSH_USER@$SSH_HOST" "mkdir -p '${REMOTE_PATH}'"
+        run: ssh -p "${{ secrets.SSH_PORT || '22' }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+               "mkdir -p '${{ vars.REMOTE_PATH }}'"
 
-      - name: Rsync deploy
+      - name: Upload site (dist → REMOTE_PATH)
         run: |
           rsync -rltvz --delete-delay \
-            -e "ssh -p ${SSH_PORT:-22}" \
-            dist/ "$SSH_USER@$SSH_HOST:${REMOTE_PATH}/"
+            -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
+            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ vars.REMOTE_PATH }}/"
 
+      # 3) Reload nginx (no config change)
       - name: Reload nginx
         run: |
-          ssh -p "${SSH_PORT:-22}" "$SSH_USER@$SSH_HOST" 'sudo nginx -t && sudo systemctl reload nginx'
+          ssh -p "${{ secrets.SSH_PORT || '22' }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "sudo systemctl reload nginx || sudo systemctl restart nginx"
