@@ -1,8 +1,24 @@
 // .vuepress/enhanceApp.js
 import liveResult from './components/liveResult.vue';
 
-export default ({ Vue, router }) => {
+export default ({ Vue, router, isServer }) => {
   Vue.component('liveResult', liveResult);
+  if (isServer) return;
+
+  const mountConsentBanner = () => {
+    if (document.getElementById('consent-banner-root')) return; // already mounted
+    const root = document.createElement('div');
+    root.id = 'consent-banner-root';
+    document.body.appendChild(root);
+
+    const ConsentBanner = require('./components/ConsentBanner.vue').default;
+    new Vue({ render: h => h(ConsentBanner) }).$mount(root);
+  };
+
+  router.onReady(() => {
+    setTimeout(mountConsentBanner, 0);        // first load
+    router.afterEach(() => setTimeout(mountConsentBanner, 0)); // after navs
+  });
 
   if (typeof window === 'undefined') return;
   window.dataLayer = window.dataLayer || [];
@@ -136,7 +152,7 @@ export default ({ Vue, router }) => {
     const url = resolveUrl(rawHref);
     const href = url ? url.href : rawHref;           // report full href
     const path = url ? url.pathname : '';            // normalized path
-    const txt  = labelOf(el) || '';
+    const txt = labelOf(el) || '';
     const area = areaOf(el);
 
     // 1) NAVBAR: explicit mapping has priority
