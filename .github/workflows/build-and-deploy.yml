@@ -62,7 +62,7 @@ jobs:
 
     # Optional: keep environments if you use them
     environment:
-      name: ${{ github.ref_name == 'master' && 'prod' || 'qa' }}
+      name: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
 
     steps:
       # Download artifacts
