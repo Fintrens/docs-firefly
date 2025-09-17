@@ -6,11 +6,11 @@ module.exports = {
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
-  title: 'Firefly',
+  title: 'Firefly by Fintrens: Verified Algo Trading & Backtest Results (5Y)',
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#description
    */
-  description: description,
+  description: 'Firefly by Fintrens: Swarm Intelligence trading bot with transparent 5-year backtest results. Automated, risk-managed strategies for stocks, options, commodities, crypto.',
 
   /**
    * Extra tags to be injected to the page HTML `<head>`
@@ -20,7 +20,91 @@ module.exports = {
   head: [
     ['meta', { name: 'theme-color', content: '#ffffff' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
-    ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }]
+    ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }],
+
+    // SEO
+    ['meta', { name: 'description', content: 'Firefly by Fintrens: Swarm Intelligence trading bot with transparent 5-year backtest results. Automated, risk-managed strategies for stocks, options, commodities, crypto.' }],
+    ['link', { rel: 'canonical', href: 'https://www.docs.firefly.fintrens.com/' }],
+    ['meta',{ name:"keywords", content: 'firefly by fintrens, algorithmic trading bot, automated trading software, fintech trading platform, swarm intelligence trading, backtesting results, quantitative trading bot, fintrens algorithmic trading, firefly trading bot, algo trading india, trading bot backtest, automated trading system, financial trading algorithm, risk management trading, portfolio optimization bot, firefly by fintrens trading bot, best algorithmic trading bot india fintrens, automated trading with 5-year backtest results firefly, swarm intelligence trading bot firefly fintrens, quantitative trading platform with 267% returns firefly, algo trading bot options strategies fintrens, automated trading software with risk management firefly, fintrens trading platform, firefly automated trading, fintrens backtest results, firefly quantitative trading, fintrens swarm intelligence, firefly trading technology india, fintrens financial algorithm platform.'}],
+
+    ['meta', { property: 'og:title', content: 'Firefly by Fintrens: 5-Year Verified Backtest Results' }],
+    ['meta', { property: 'og:description', content: 'See real 5-year backtest results with Firefly by Fintrens. Swarm Intelligence powered trading, risk-managed strategies for stocks, options, commodities, and crypto. Trusted by quant traders.' }],
+    ['meta', { property: 'og:url', content: 'https://www.docs.firefly.fintrens.com/' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:image', content: 'https://www.docs.firefly.fintrens.com/path-to-your-image.jpg' }], // TODO: replace with your real image (1200x630 recommended)
+    ['meta', { property: 'og:site_name', content: 'Firefly by Fintrens' }],
+
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'Firefly by Fintrens: Verified Algo Trading Bot with 5Y Backtest' }],
+    ['meta', { name: 'twitter:description', content: 'Backtested, transparent, Swarm Intelligence driven automated trading for stocks, options, and more. Data-driven profits, robust risk management by Fintrens.' }],
+
+    [
+      'script',
+      { type: 'application/ld+json' },
+      JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Firefly by Fintrens",
+        "operatingSystem": "Web-based",
+        "applicationCategory": "FinanceApplication",
+        "offers": {
+          "@type": "Offer",
+          "url": "https://www.docs.firefly.fintrens.com/",
+          "price": 0,
+          "priceCurrency": "INR"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": 4.8,
+          "ratingCount": 120
+        },
+        "description": "Firefly by Fintrens: Swarm Intelligence powered trading bot with transparent 5-year backtest results.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Fintrens Technologies Pvt. Ltd.",
+          "url": "https://www.fintrens.com"
+        },
+        "sameAs": [
+          "https://www.fintrens.com"
+        ]
+      })
+    ],
+       [
+      'script',
+      { type: 'application/ld+json' },
+      JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Firefly by Fintrens",
+        "operatingSystem": "Web-based",
+        "applicationCategory": "FinanceApplication",
+        "offers": {
+          "@type": "Offer",
+          "url": "https://www.docs.firefly.fintrens.com/",
+          "price": "Contact for pricing"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "120"
+        },
+        "description": "Firefly by Fintrens: Swarm Intelligence powered trading bot with transparent 5-year backtest performance, multi-asset support, full risk management, and adaptive strategies.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Fintrens Technologies Pvt. Ltd.",
+          "url": "https://www.fintrens.com"
+        }
+      })
+    ],
+    [
+      'script',
+      {},
+      `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','GTM-WVZ3WWM4');`
+    ]
   ],
 
   /**
@@ -62,7 +146,7 @@ module.exports = {
       {
         text: 'Backtest Result',
         link: '/tables/Options_Elysium/',
-        target: "_black"
+        target: "_blank"
       },
       {
         text: 'Verified Result',
@@ -97,72 +181,72 @@ module.exports = {
           ]
         }
       ],
-    '/tables/': [
-  {
-    title: 'Backtest result',
-    collapsable: false,
-    children: [
-      {
-        title: 'Options Elysium',
-        collapsable: true,
-        style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
-        children: [
-          'Options_Elysium',
-          {
-            title: 'Backtest Results',
-            style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
-            collapsable: true,
-            children: [
-              'Options_Elysium_2020',
-              'Options_Elysium_2021',
-              'Options_Elysium_2022',
-              'Options_Elysium_2023',
-              'Options_Elysium_2024',
-            ]
-          }
-        ]
-      },
-      {
-        title: 'Options Ember',
-        collapsable: true,
-        children: [
-          'Options_Ember',
-          {
-            title: 'Backtest Results',
-            style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
-            collapsable: true,
-            children: [
-              'Options_Ember_2020',
-              'Options_Ember_2021',
-              'Options_Ember_2022',
-              'Options_Ember_2023',
-              'Options_Ember_2024',
-            ]
-          }
-        ]
-      },
-      {
-        title: 'Options Mirage',
-        collapsable: true,
-        children: [
-          'Options_Mirage',
-          {
-            title: 'Backtest Results',
-            style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
-            collapsable: true,
-            children: [
-              'Options_Mirage_2020',
-              'Options_Mirage_2021',
-              'Options_Mirage_2022',
-              'Options_Mirage_2023',
-              'Options_Mirage_2024',
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
+      '/tables/': [
+        {
+          title: 'Backtest result',
+          collapsable: false,
+          children: [
+            {
+              title: 'Options Elysium',
+              collapsable: true,
+              style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
+              children: [
+                'Options_Elysium',
+                {
+                  title: 'Backtest Results',
+                  style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
+                  collapsable: true,
+                  children: [
+                    'Options_Elysium_2020',
+                    'Options_Elysium_2021',
+                    'Options_Elysium_2022',
+                    'Options_Elysium_2023',
+                    'Options_Elysium_2024',
+                  ]
+                }
+              ]
+            },
+            {
+              title: 'Options Ember',
+              collapsable: true,
+              children: [
+                'Options_Ember',
+                {
+                  title: 'Backtest Results',
+                  style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
+                  collapsable: true,
+                  children: [
+                    'Options_Ember_2020',
+                    'Options_Ember_2021',
+                    'Options_Ember_2022',
+                    'Options_Ember_2023',
+                    'Options_Ember_2024',
+                  ]
+                }
+              ]
+            },
+            {
+              title: 'Options Mirage',
+              collapsable: true,
+              children: [
+                'Options_Mirage',
+                {
+                  title: 'Backtest Results',
+                  style: 'cursor: pointer; user-select: none;', // Inline style for clickable hand cursor
+                  collapsable: true,
+                  children: [
+                    'Options_Mirage_2020',
+                    'Options_Mirage_2021',
+                    'Options_Mirage_2022',
+                    'Options_Mirage_2023',
+                    'Options_Mirage_2024',
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
 
 
     }
