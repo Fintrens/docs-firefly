@@ -11,7 +11,7 @@ export default ({ Vue, router, isServer }) => {
     root.id = 'consent-banner-root';
     document.body.appendChild(root);
 
-    const ConsentBanner = require('./components/ConsentBanner.vue').default;
+    const ConsentBanner = require('./components/consentBanner.vue').default;
     new Vue({ render: h => h(ConsentBanner) }).$mount(root);
   };
 
