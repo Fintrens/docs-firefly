@@ -2,7 +2,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ master, dev ]   # master → prod, dev → qa
+    branches: [ master, dev ]
   workflow_dispatch:
 
 concurrency:
@@ -15,8 +15,10 @@ jobs:
     defaults:
       run:
         working-directory: docs
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node 16.16.0
         uses: actions/setup-node@v4
@@ -47,38 +49,22 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-      - name: Upload deploy-assets
-        uses: actions/upload-artifact@v4
-        with:
-          name: deploy-assets
-          path: deploy-assets
-          if-no-files-found: error
-          retention-days: 3
-
   deploy:
     needs: build
     if: ${{ github.ref_name == 'master' || github.ref_name == 'dev' }}
     runs-on: ubuntu-latest
-
-    # Optional: keep environments if you use them
     environment:
       name: ${{ github.ref_name == 'master' && 'prod' || 'dev' }}
 
     steps:
-      # Download artifacts
+      - name: Checkout (for scripts)
+        uses: actions/checkout@v4
+
       - name: Download site-dist
         uses: actions/download-artifact@v4
         with:
           name: site-dist
           path: dist
-
-      - name: Download deploy-assets
-        uses: actions/download-artifact@v4
-        with:
-          name: deploy-assets
-          path: deploy-assets
-
-      # SSH setup
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -91,7 +77,7 @@ jobs:
 
       # 1) BACKUP current ${{ vars.REMOTE_PATH }}
       - name: Upload remote-backup.sh
-        run: scp -P "${{ secrets.SSH_PORT || '22' }}" deploy-assets/remote-backup.sh \
+        run: scp -P "${{ secrets.SSH_PORT || '22' }}" script/remote-backup.sh \
              "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/remote-backup.sh"
 
       - name: Run remote-backup.sh
