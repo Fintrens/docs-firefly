@@ -112,7 +112,7 @@ jobs:
       - name: Upload site (dist → REMOTE_PATH)
         run: |
           set -euo pipefail
-          rsync -rltvz --delete-delay -vv --progress \
+          rsync -rltvz -vv --progress \
             -e "ssh -p ${{ secrets.SSH_PORT || '22' }} -vvv -o LogLevel=DEBUG3" \
             dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ vars.REMOTE_PATH }}/" \
             |& tee -a "$RUNNER_TEMP/rsync_upload.log"
