@@ -25,7 +25,7 @@ module.exports = {
     // SEO
     ['meta', { name: 'description', content: 'Firefly by Fintrens: Swarm Intelligence trading bot with transparent 5-year backtest results. Automated, risk-managed strategies for stocks, options, commodities, crypto.' }],
     ['link', { rel: 'canonical', href: 'https://www.docs.firefly.fintrens.com/' }],
-    ['meta',{ name:"keywords", content: 'firefly by fintrens, algorithmic trading bot, automated trading software, fintech trading platform, swarm intelligence trading, backtesting results, quantitative trading bot, fintrens algorithmic trading, firefly trading bot, algo trading india, trading bot backtest, automated trading system, financial trading algorithm, risk management trading, portfolio optimization bot, firefly by fintrens trading bot, best algorithmic trading bot india fintrens, automated trading with 5-year backtest results firefly, swarm intelligence trading bot firefly fintrens, quantitative trading platform with 267% returns firefly, algo trading bot options strategies fintrens, automated trading software with risk management firefly, fintrens trading platform, firefly automated trading, fintrens backtest results, firefly quantitative trading, fintrens swarm intelligence, firefly trading technology india, fintrens financial algorithm platform.'}],
+    ['meta', { name: "keywords", content: 'firefly by fintrens, algorithmic trading bot, automated trading software, fintech trading platform, swarm intelligence trading, backtesting results, quantitative trading bot, fintrens algorithmic trading, firefly trading bot, algo trading india, trading bot backtest, automated trading system, financial trading algorithm, risk management trading, portfolio optimization bot, firefly by fintrens trading bot, best algorithmic trading bot india fintrens, automated trading with 5-year backtest results firefly, swarm intelligence trading bot firefly fintrens, quantitative trading platform with 267% returns firefly, algo trading bot options strategies fintrens, automated trading software with risk management firefly, fintrens trading platform, firefly automated trading, fintrens backtest results, firefly quantitative trading, fintrens swarm intelligence, firefly trading technology india, fintrens financial algorithm platform.' }],
 
     ['meta', { property: 'og:title', content: 'Firefly by Fintrens: 5-Year Verified Backtest Results' }],
     ['meta', { property: 'og:description', content: 'See real 5-year backtest results with Firefly by Fintrens. Swarm Intelligence powered trading, risk-managed strategies for stocks, options, commodities, and crypto. Trusted by quant traders.' }],
@@ -69,7 +69,7 @@ module.exports = {
         ]
       })
     ],
-       [
+    [
       'script',
       { type: 'application/ld+json' },
       JSON.stringify({
@@ -104,6 +104,15 @@ module.exports = {
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','GTM-WVZ3WWM4');`
+    ],
+        [
+      'link',
+      {
+        rel: 'preload',
+        as: 'image',
+        href: '/Final.png',
+        fetchpriority: 'high'
+      }
     ]
   ],
 
