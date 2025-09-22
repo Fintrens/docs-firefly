@@ -1,12 +1,6 @@
 export default ({ Vue, router, isServer }) => {
   if (isServer) return;
 
-  // Lazy component: split out of main bundle
-  Vue.component(
-    'liveResult',
-    () => import('./components/liveResult.vue')
-  );
-
   const mountConsentBanner = () => {
     if (document.getElementById('consent-banner-root')) return;
     const root = document.createElement('div');
@@ -92,7 +86,6 @@ export default ({ Vue, router, isServer }) => {
       t.includes('verified') ||
       t.includes('about') ||
       t.includes('live result') ||
-      (url && url.pathname.startsWith('/live-result/')) ||
       (url && /youtu\.be|youtube\.com|sensibull|fintrens\.com/i.test(url.href))
     ) return 'redirect_external-link';
     return null;

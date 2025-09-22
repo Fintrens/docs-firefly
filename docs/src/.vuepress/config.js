@@ -146,7 +146,7 @@ module.exports = {
       {
         text: 'Product Video',
         link: 'https://youtu.be/X8zcysqXlSA?si=HwefjDjRrD9CvvXK',
-        target: '_self',
+        target: '_blank',
         rel: false,
       },
       {
@@ -163,10 +163,6 @@ module.exports = {
         link: 'https://web.sensibull.com/verified-pnl/chivalrous-sardine/1d1jrssPASS0HN',
         target: '_blank',
         rel: false
-      },
-      {
-        text: 'Live Result',
-        link: '/live-result/',
       },
       {
         text: 'About us',
