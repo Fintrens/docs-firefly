@@ -1,31 +1,27 @@
-// .vuepress/enhanceApp.js
-import liveResult from './components/liveResult.vue';
-
 export default ({ Vue, router, isServer }) => {
-  Vue.component('liveResult', liveResult);
   if (isServer) return;
 
   const mountConsentBanner = () => {
-    if (document.getElementById('consent-banner-root')) return; // already mounted
+    if (document.getElementById('consent-banner-root')) return;
     const root = document.createElement('div');
     root.id = 'consent-banner-root';
     document.body.appendChild(root);
-
-    const ConsentBanner = require('./components/consentBanner.vue').default;
-    new Vue({ render: h => h(ConsentBanner) }).$mount(root);
+    import('./components/consentBanner.vue')
+      .then((m) => new Vue({ render: (h) => h(m.default) }).$mount(root))
+      .catch(() => { });
   };
+  const onIdle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn) : setTimeout(fn, 200));
+  router.onReady(() => onIdle(mountConsentBanner));
+  router.afterEach(() => onIdle(mountConsentBanner));
 
-  router.onReady(() => {
-    setTimeout(mountConsentBanner, 0);        // first load
-    router.afterEach(() => setTimeout(mountConsentBanner, 0)); // after navs
-  });
-
-  if (typeof window === 'undefined') return;
+  // --------- Lightweight analytics helpers (same behavior as yours) ---------
   window.dataLayer = window.dataLayer || [];
 
-  // ---------------- helpers ----------------
   const slug = (s) =>
-    (s || '').toString().trim().toLowerCase()
+    (s || '')
+      .toString()
+      .trim()
+      .toLowerCase()
       .replace(/[\s/]+/g, '-')
       .replace(/[^a-z0-9-_]/g, '')
       .slice(0, 60);
@@ -40,8 +36,12 @@ export default ({ Vue, router, isServer }) => {
     if (!el) return '';
     if (el.id) return el.id;
     const base = slug(labelOf(el) || 'item');
-    let id = `${prefix}-${base || 'x'}`, i = 1;
-    while (document.getElementById(id)) { i++; id = `${prefix}-${base}-${i}`; }
+    let id = `${prefix}-${base || 'x'}`,
+      i = 1;
+    while (document.getElementById(id)) {
+      i++;
+      id = `${prefix}-${base}-${i}`;
+    }
     el.id = id;
     return id;
   };
@@ -57,11 +57,13 @@ export default ({ Vue, router, isServer }) => {
   };
 
   const resolveUrl = (href = '') => {
-    try { return new URL(href, location.origin); }
-    catch { return null; }
+    try {
+      return new URL(href, location.origin);
+    } catch {
+      return null;
+    }
   };
 
-  // Normalize site section by PATH (not host)
   const sectionFromPath = (p = location.pathname) => {
     if (p.startsWith('/guide/')) return 'docs';
     if (p.startsWith('/tables/')) return 'tables';
@@ -70,57 +72,36 @@ export default ({ Vue, router, isServer }) => {
     return 'other';
   };
 
-  // Map NAV link -> explicit event (highest priority for navbar)
   const mapNavEvent = (href = '', text = '') => {
     const url = resolveUrl(href);
     const path = url ? url.pathname : href || '';
     const t = (text || '').toLowerCase();
-
     if (t.includes('docs') || path.startsWith('/guide/')) return 'redirect_docs';
     if (t.includes('tables') || path.startsWith('/tables/')) return 'redirect_tables';
-    if (t.includes('backtest') || path.startsWith('/backtest') || path.startsWith('/backtest-results/')) {
+    if (t.includes('backtest') || path.startsWith('/backtest') || path.startsWith('/backtest-results/'))
       return 'redirect_backtest_results';
-    }
     if (path === '/' || t === 'home') return 'redirect_home';
-
-    // External/other labels in nav
     if (
       t.includes('product video') ||
       t.includes('verified') ||
       t.includes('about') ||
       t.includes('live result') ||
-      (url && url.pathname.startsWith('/live-result/')) ||
       (url && /youtu\.be|youtube\.com|sensibull|fintrens\.com/i.test(url.href))
     ) return 'redirect_external-link';
-
     return null;
   };
 
-  // “External/other” anywhere by label/host/path rules
   const isExternalOther = (urlObj, text = '') => {
     const t = (text || '').toLowerCase();
-    // Keywords that should always be treated as external/other
-    if (
-      t.includes('product video') ||
-      t.includes('verified') ||
-      t.includes('about') ||
-      t.includes('live result')
-    ) return true;
-
+    if (t.includes('product video') || t.includes('verified') || t.includes('about') || t.includes('live result'))
+      return true;
     if (!urlObj) return false;
-
-    // Treat /live-result/* as "external-link" bucket even if same host
     if (urlObj.pathname.startsWith('/live-result/')) return true;
-
-    // Truly external hosts (YouTube, Sensibull, other fintrens properties, etc.)
     const sameHost = urlObj.hostname === location.hostname;
     if (!sameHost) {
-      // allow docs host to still be internal
       const isDocsHost = urlObj.hostname === 'docs.firefly.fintrens.com';
       if (!isDocsHost) return true;
     }
-
-    // Additionally match known external domains by href
     return /youtu\.be|youtube\.com|sensibull|fintrens\.com/i.test(urlObj.href) && urlObj.hostname !== location.hostname;
   };
 
@@ -131,88 +112,47 @@ export default ({ Vue, router, isServer }) => {
     const page_url = location.pathname + location.search;
     const link_area = areaOf(el);
     const site_section = sectionFromPath();
-
-    window.dataLayer.push({
-      event,
-      link_id,
-      link_text,
-      link_url,
-      page_url,
-      link_area,
-      site_section
-    });
+    window.dataLayer.push({ event, link_id, link_text, link_url, page_url, link_area, site_section });
   };
 
-  // ---------------- click router ----------------
   const handleClick = (e) => {
     const el = findLink(e.target);
     if (!el) return;
-
     const rawHref = el.getAttribute('href') || '';
     const url = resolveUrl(rawHref);
-    const href = url ? url.href : rawHref;           // report full href
-    const path = url ? url.pathname : '';            // normalized path
+    const href = url ? url.href : rawHref;
     const txt = labelOf(el) || '';
     const area = areaOf(el);
 
-    // 1) NAVBAR: explicit mapping has priority
     if (area === 'nav') {
       const ev = mapNavEvent(rawHref, txt);
-      if (ev) { pushEvent({ event: ev, el, href }); return; }
+      if (ev) {
+        pushEvent({ event: ev, el, href });
+        return;
+      }
     }
-
-    // 2) External/other anywhere (by keyword/host/path)
     if (isExternalOther(url, txt)) {
       pushEvent({ event: 'redirect_external-link', el, href });
       return;
     }
-
-    // 3) Section-based classification by CURRENT page section
-    //    (Tracks "every link in that page" rule)
     const currentSection = sectionFromPath(location.pathname);
-    if (currentSection === 'docs') {
-      pushEvent({ event: 'redirect_docs', el, href });
-      return;
-    }
-    if (currentSection === 'tables') {
-      pushEvent({ event: 'redirect_tables', el, href });
-      return;
-    }
-    if (currentSection === 'backtest_results') {
-      pushEvent({ event: 'redirect_backtest_results', el, href });
-      return;
-    }
-    if (currentSection === 'home') {
-      pushEvent({ event: 'redirect_home', el, href });
-      return;
-    }
+    if (currentSection === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
+    if (currentSection === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
+    if (currentSection === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
+    if (currentSection === 'home') return pushEvent({ event: 'redirect_home', el, href });
+    const targetSection = sectionFromPath(url ? url.pathname : '');
+    if (targetSection === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
+    if (targetSection === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
+    if (targetSection === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
+    if (targetSection === 'home') return pushEvent({ event: 'redirect_home', el, href });
 
-    // 4) If nothing matched, try target page section as a fallback
-    const targetSection = sectionFromPath(path || location.pathname);
-    if (targetSection === 'docs') {
-      pushEvent({ event: 'redirect_docs', el, href });
-      return;
-    }
-    if (targetSection === 'tables') {
-      pushEvent({ event: 'redirect_tables', el, href });
-      return;
-    }
-    if (targetSection === 'backtest_results') {
-      pushEvent({ event: 'redirect_backtest_results', el, href });
-      return;
-    }
-    if (targetSection === 'home') {
-      pushEvent({ event: 'redirect_home', el, href });
-      return;
-    }
-
-    // 5) Ultimate fallback → external-link bucket
     pushEvent({ event: 'redirect_external-link', el, href });
   };
 
   document.addEventListener('click', handleClick, true);
-  // Middle-clicks (open in new tab) should also count
-  document.addEventListener('auxclick', (e) => { if (e.button === 1) handleClick(e); }, true);
+  document.addEventListener('auxclick', (e) => {
+    if (e.button === 1) handleClick(e);
+  }, true);
 
   // ---------------- stabilize DOM (IDs + labels) ----------------
   const stabilizeDom = () => {

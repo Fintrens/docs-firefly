@@ -18,6 +18,7 @@ module.exports = {
    * ref：https://v1.vuepress.vuejs.org/config/#head
    */
   head: [
+    ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1' }],
     ['meta', { name: 'theme-color', content: '#ffffff' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black' }],
@@ -145,7 +146,7 @@ module.exports = {
       {
         text: 'Product Video',
         link: 'https://youtu.be/X8zcysqXlSA?si=HwefjDjRrD9CvvXK',
-        target: '_self',
+        target: '_blank',
         rel: false,
       },
       {
@@ -155,17 +156,13 @@ module.exports = {
       {
         text: 'Backtest Result',
         link: '/tables/Options_Elysium/',
-        target: "_blank"
+        target: "_self"
       },
       {
         text: 'Verified Result',
         link: 'https://web.sensibull.com/verified-pnl/chivalrous-sardine/1d1jrssPASS0HN',
-        target: '_self',
+        target: '_blank',
         rel: false
-      },
-      {
-        text: 'Live Result',
-        link: '/live-result/',
       },
       {
         text: 'About us',
@@ -270,5 +267,45 @@ module.exports = {
     '@vuepress/plugin-medium-zoom',
     '@vuepress-plugin-smooth-scroll',
 
-  ]
+  ],
+  shouldPrefetch: () => false,
+
+  // Only preload truly critical assets
+  shouldPreload: (file, type) => {
+    if (type === 'script') return /app\.[\w]+\.js$/.test(file);  // entry only
+    if (type === 'style')  return /styles\.[\w]+\.css$/.test(file);
+    if (type === 'font')   return true; // small, render-blocking
+    return false;
+  },
+
+  configureWebpack: (config, isServer) => {
+    if (!isServer) {
+      // Kill source maps in prod
+      config.devtool = false;
+      // Minify aggressively
+      config.optimization = config.optimization || {};
+      config.optimization.minimizer = (config.optimization.minimizer || []).map(m => {
+        if (m.options && m.options.terserOptions) {
+          m.options.terserOptions.compress = {
+            ...(m.options.terserOptions.compress || {}),
+            drop_console: true,
+            drop_debugger: true,
+            pure_funcs: ['console.info','console.debug','console.warn'],
+          };
+        }
+        return m;
+      });
+
+      // Force smaller, more cacheable chunks
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 160000,
+        cacheGroups: {
+          vendor_vue: { test: /[\\/]node_modules[\\/]vue[\\/]/, name: 'vendor-vue', priority: 30, chunks: 'all' },
+          vendor_misc: { test: /[\\/]node_modules[\\/](lodash|dayjs|moment|chart|echarts|prismjs)[\\/]/, name: 'vendor-misc', priority: 20, chunks: 'all' },
+        }
+      };
+    }
+  },
 }
