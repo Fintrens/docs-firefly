@@ -1,5 +1,107 @@
 export default ({ Vue, router, isServer }) => {
+
   if (isServer) return;
+  window.dataLayer = window.dataLayer || [];
+
+  // ---- One-shot GTM loader ----
+  function loadGTM() {
+    if (window.__gtmLoaded) return;
+    window.__gtmLoaded = true;
+
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-WVZ3WWM4'; // ← your GTM ID
+    document.head.appendChild(s);
+  }
+  const once = { once: true, passive: true, capture: false };
+  const onFirstInteraction = () => {
+    loadGTM();
+    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
+      window.removeEventListener(evt, onFirstInteraction, once)
+    );
+  };
+  ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
+    window.addEventListener(evt, onFirstInteraction, once)
+  );
+
+  // ---- SPA page_view for GA4 via GTM ----
+  // In GTM: GA4 Configuration tag -> "Send a page view event" = OFF
+  router.afterEach((to) => {
+    // Push a virtual page_view; if GTM isn't loaded yet, it will be processed later.
+    window.dataLayer.push({
+      event: 'page_view',
+      page_path: to.fullPath,
+      page_location: window.location.href,
+      page_title: document.title
+    });
+  });
+  // ---------- Small CDN loader helpers ----------
+  const loaded = new Set();
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (loaded.has(src)) return resolve();
+      const el = document.createElement('script');
+      el.async = true;
+      el.src = src;
+      el.onload = () => { loaded.add(src); resolve(); };
+      el.onerror = reject;
+      document.head.appendChild(el);
+    });
+  }
+
+  // requestIdleCallback shim
+  const idle = (cb) =>
+    (window.requestIdleCallback ? window.requestIdleCallback(cb) : setTimeout(cb, 1));
+
+  // ---------- Lazy features via CDN (no bundle cost) ----------
+  let zoomApplied = false;
+  async function applyZoomIfNeeded() {
+    const imgs = document.querySelectorAll('.theme-default-content :not(a) > img');
+    if (!imgs.length || zoomApplied) return;
+    await loadScript('https://cdn.jsdelivr.net/npm/medium-zoom@1.0.8/dist/medium-zoom.min.js');
+    if (window.mediumZoom) {
+      window.mediumZoom(imgs, { background: 'rgba(0,0,0,0.85)' });
+      zoomApplied = true;
+    }
+  }
+
+  const supportsCssSmooth = 'scrollBehavior' in document.documentElement.style;
+  async function ensureSmoothScrollIfNeeded() {
+    if (supportsCssSmooth) return;
+    await loadScript('https://cdn.jsdelivr.net/npm/smoothscroll-polyfill@0.4.4/dist/smoothscroll.min.js');
+    if (window.__forceSmoothScrollPolyfill) {
+      // some builds expose a global; otherwise:
+      window.__forceSmoothScrollPolyfill();
+    } else if (window.polyfill) {
+      // fallback if the polyfill exports `polyfill`
+      window.polyfill();
+    }
+  }
+
+  let prismReady = false;
+  async function highlightCodeIfNeeded() {
+    const blocks = document.querySelectorAll('pre[class*="language-"] code');
+    if (!blocks.length || prismReady) return;
+
+    // Core + the languages you actually use (add/remove as needed)
+    await loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js');
+    await Promise.all([
+      loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js'),
+      loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js'),
+      loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js'),
+    ]);
+    if (window.Prism && window.Prism.highlightAll) {
+      window.Prism.highlightAll();
+      prismReady = true;
+    }
+  }
+
+  // Run lazy features after each route change (post-paint)
+  router.afterEach(() => {
+    idle(applyZoomIfNeeded);
+    idle(ensureSmoothScrollIfNeeded);
+    idle(highlightCodeIfNeeded);
+  });
 
   const mountConsentBanner = () => {
     if (document.getElementById('consent-banner-root')) return;
