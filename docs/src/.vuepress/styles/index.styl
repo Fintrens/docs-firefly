@@ -4,8 +4,30 @@
  * ref：https://v1.vuepress.vuejs.org/config/#index-styl
  */
 
-.home .hero img
-  max-width 450px!important
+/* Set your real size/ratio here */
+:root
+  --hero-max-w: 450px
+  --hero-ratio: 233/263 
+
+/* Make sure we target VuePress' hero image */
+.home .hero
+  justify-items center
+
+.home .hero img,
+.home .hero .hero-image
+  grid-row 1
+  display block
+  width min(var(--hero-max-w), 90vw)
+  height auto
+  aspect-ratio var(--hero-ratio) 
+  object-fit contain
+
+/* Fallback for browsers without aspect-ratio */
+@supports not (aspect-ratio: 1 / 1)
+  .home .hero img,
+  .home .hero .hero-image
+    /* height = width * (263/233) */
+    height calc(min(var(--hero-max-w), 90vw) * (263/233))
 
 table th, td  {
   white-space: nowrap;
@@ -13,12 +35,8 @@ table th, td  {
   text-align: center;
   width: auto !important;
 }
-
-footer{
-  border-top:none; 
-
-}
-
-
-
-
+.footer
+  min-height 44px
+  border-top none
+  font-family -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",
+               "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif

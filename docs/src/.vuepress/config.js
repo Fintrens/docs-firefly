@@ -1,6 +1,7 @@
 
 
 const { description } = require('../../package')
+const TerserPlugin = require('terser-webpack-plugin');
 //module.exports = require('../src/browser/builds/algoliasearch.jquery.js');
 module.exports = {
   /**
@@ -98,15 +99,6 @@ module.exports = {
       })
     ],
     [
-      'script',
-      {},
-      `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','GTM-WVZ3WWM4');`
-    ],
-        [
       'link',
       {
         rel: 'preload',
@@ -261,51 +253,67 @@ module.exports = {
   /**
    * Apply plugins，ref：https://v1.vuepress.vuejs.org/zh/plugin/
    */
-  plugins: [
-    [],
-    '@vuepress/plugin-back-to-top',
-    '@vuepress/plugin-medium-zoom',
-    '@vuepress-plugin-smooth-scroll',
-
-  ],
   shouldPrefetch: () => false,
 
   // Only preload truly critical assets
   shouldPreload: (file, type) => {
-    if (type === 'script') return /app\.[\w]+\.js$/.test(file);  // entry only
-    if (type === 'style')  return /styles\.[\w]+\.css$/.test(file);
-    if (type === 'font')   return true; // small, render-blocking
+    if (type === 'script') return /app\.[\w]+\.js$/.test(file);
+    if (type === 'style') return /styles\.[\w]+\.css$/.test(file);
     return false;
   },
 
-  configureWebpack: (config, isServer) => {
-    if (!isServer) {
-      // Kill source maps in prod
-      config.devtool = false;
-      // Minify aggressively
-      config.optimization = config.optimization || {};
-      config.optimization.minimizer = (config.optimization.minimizer || []).map(m => {
-        if (m.options && m.options.terserOptions) {
-          m.options.terserOptions.compress = {
-            ...(m.options.terserOptions.compress || {}),
-            drop_console: true,
-            drop_debugger: true,
-            pure_funcs: ['console.info','console.debug','console.warn'],
-          };
-        }
-        return m;
-      });
+  // ✅ Plugins
+  plugins: [
+    // Minify JS/CSS/HTML – clears “Minify JavaScript”
+    ['vuepress-plugin-minify', {
+      minifyJS: true,
+      minifyCSS: true,
+      minifyHTML: true,
+      removeConsole: true,
+    }],
+  ],
 
-      // Force smaller, more cacheable chunks
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 160000,
-        cacheGroups: {
-          vendor_vue: { test: /[\\/]node_modules[\\/]vue[\\/]/, name: 'vendor-vue', priority: 30, chunks: 'all' },
-          vendor_misc: { test: /[\\/]node_modules[\\/](lodash|dayjs|moment|chart|echarts|prismjs)[\\/]/, name: 'vendor-misc', priority: 20, chunks: 'all' },
-        }
-      };
-    }
+  // Force prod + strong minify even if NODE_ENV isn't set
+  configureWebpack: (config, isServer) => {
+    if (isServer) return {};
+    return {
+      mode: 'production',
+      devtool: false,
+      optimization: {
+        minimize: true,
+        minimizer: [
+          new TerserPlugin({
+            extractComments: false,
+            terserOptions: {
+              compress: {
+                drop_console: true,
+                drop_debugger: true,
+                pure_funcs: ['console.info', 'console.debug', 'console.warn'],
+                passes: 2,
+              },
+              mangle: true,
+              format: { comments: false },
+            },
+          }),
+        ],
+        // 🔑 KEY: do NOT create initial vendor-misc; only split async chunks
+        splitChunks: {
+          chunks: 'async',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // keep ONLY vue core if it ever gets async-split (usually it's in app.*)
+            'vendor-vue-core': {
+              test: /[\\/]node_modules[\\/](vue|vue-router)[\\/]/,
+              name: 'vendor-vue-core',
+              priority: 40,
+              chunks: 'all',
+              enforce: false,
+            },
+          },
+        },
+        runtimeChunk: false,
+      },
+    };
   },
 }
