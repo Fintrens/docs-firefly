@@ -1,41 +1,33 @@
 export default ({ Vue, router, isServer }) => {
-
   if (isServer) return;
-  window.dataLayer = window.dataLayer || [];
+  const GTM_ID = 'GTM-WVZ3WWM4';
+  const DL = 'dataLayer';
 
-  // ---- One-shot GTM loader ----
-  function loadGTM() {
-    if (window.__gtmLoaded) return;
-    window.__gtmLoaded = true;
+  window[DL] = window[DL] || [];
+
+  if (!window.__gtmBooted) {
+    window.__gtmBooted = true;
+    window[DL].push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+    const params = new URLSearchParams({ id: GTM_ID, l: DL });
+    const debug = new URLSearchParams(location.search).get('gtm_debug');
+    if (debug) params.set('gtm_debug', debug);
 
     const s = document.createElement('script');
     s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-WVZ3WWM4'; // ← your GTM ID
+    s.src = `https://www.googletagmanager.com/gtm.js?${params.toString()}`;
     document.head.appendChild(s);
   }
-  const once = { once: true, passive: true, capture: false };
-  const onFirstInteraction = () => {
-    loadGTM();
-    ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
-      window.removeEventListener(evt, onFirstInteraction, once)
-    );
-  };
-  ['pointerdown', 'keydown', 'scroll', 'touchstart'].forEach(evt =>
-    window.addEventListener(evt, onFirstInteraction, once)
-  );
-
-  // ---- SPA page_view for GA4 via GTM ----
-  // In GTM: GA4 Configuration tag -> "Send a page view event" = OFF
-  router.afterEach((to) => {
-    // Push a virtual page_view; if GTM isn't loaded yet, it will be processed later.
-    window.dataLayer.push({
+  const pushPageView = () => {
+    window[DL].push({
       event: 'page_view',
-      page_path: to.fullPath,
-      page_location: window.location.href,
-      page_title: document.title
+      page_path: location.pathname + location.search,
+      page_location: location.href,
+      page_title: document.title,
     });
-  });
-  // ---------- Small CDN loader helpers ----------
+  };
+  if (document.readyState !== 'loading') pushPageView();
+  else document.addEventListener('DOMContentLoaded', pushPageView);
+  router.afterEach(() => setTimeout(pushPageView, 0));
   const loaded = new Set();
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -70,10 +62,8 @@ export default ({ Vue, router, isServer }) => {
     if (supportsCssSmooth) return;
     await loadScript('https://cdn.jsdelivr.net/npm/smoothscroll-polyfill@0.4.4/dist/smoothscroll.min.js');
     if (window.__forceSmoothScrollPolyfill) {
-      // some builds expose a global; otherwise:
       window.__forceSmoothScrollPolyfill();
     } else if (window.polyfill) {
-      // fallback if the polyfill exports `polyfill`
       window.polyfill();
     }
   }
@@ -82,8 +72,6 @@ export default ({ Vue, router, isServer }) => {
   async function highlightCodeIfNeeded() {
     const blocks = document.querySelectorAll('pre[class*="language-"] code');
     if (!blocks.length || prismReady) return;
-
-    // Core + the languages you actually use (add/remove as needed)
     await loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js');
     await Promise.all([
       loadScript('https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js'),
@@ -103,6 +91,9 @@ export default ({ Vue, router, isServer }) => {
     idle(highlightCodeIfNeeded);
   });
 
+  // =========================
+  // 5) Consent banner
+  // =========================
   const mountConsentBanner = () => {
     if (document.getElementById('consent-banner-root')) return;
     const root = document.createElement('div');
@@ -116,9 +107,9 @@ export default ({ Vue, router, isServer }) => {
   router.onReady(() => onIdle(mountConsentBanner));
   router.afterEach(() => onIdle(mountConsentBanner));
 
-  // --------- Lightweight analytics helpers (same behavior as yours) ---------
-  window.dataLayer = window.dataLayer || [];
-
+  // =========================
+  // 6) Analytics helpers + click mapping
+  // =========================
   const slug = (s) =>
     (s || '')
       .toString()
@@ -138,12 +129,8 @@ export default ({ Vue, router, isServer }) => {
     if (!el) return '';
     if (el.id) return el.id;
     const base = slug(labelOf(el) || 'item');
-    let id = `${prefix}-${base || 'x'}`,
-      i = 1;
-    while (document.getElementById(id)) {
-      i++;
-      id = `${prefix}-${base}-${i}`;
-    }
+    let id = `${prefix}-${base || 'x'}`, i = 1;
+    while (document.getElementById(id)) { i++; id = `${prefix}-${base}-${i}`; }
     el.id = id;
     return id;
   };
@@ -189,7 +176,7 @@ export default ({ Vue, router, isServer }) => {
       t.includes('about') ||
       t.includes('live result') ||
       (url && /youtu\.be|youtube\.com|sensibull|fintrens\.com/i.test(url.href))
-    ) return 'redirect_external-link';
+    ) return 'redirect_external_link';
     return null;
   };
 
@@ -207,6 +194,28 @@ export default ({ Vue, router, isServer }) => {
     return /youtu\.be|youtube\.com|sensibull|fintrens\.com/i.test(urlObj.href) && urlObj.hostname !== location.hostname;
   };
 
+  // ---- Push a synthetic gtm.linkClick so Click-type triggers fire ----
+  const pushGtmLinkClick = (el, href = '') => {
+    try {
+      const txt = labelOf(el) || '';
+      window[DL].push({
+        event: 'gtm.linkClick',
+        // GTM built-ins (so Click URL / Text / ID / Classes resolve in triggers)
+        'Click URL': href || el?.href || '',
+        'Click Text': txt,
+        'Click ID': el?.id || '',
+        'Click Classes': el?.className || '',
+        'Click Target': el?.getAttribute?.('target') || '',
+        // (optional) still provide gtm.element refs for debugging
+        'gtm.element': el,
+        'gtm.elementId': el?.id || '',
+        'gtm.elementClasses': el?.className || '',
+        'gtm.elementTarget': el?.getAttribute?.('target') || '',
+        'gtm.elementUrl': href || el?.href || '',
+      });
+    } catch { }
+  };
+
   const pushEvent = ({ event, el, href }) => {
     const link_id = ensureId(el, 'link');
     const link_text = labelOf(el);
@@ -214,7 +223,7 @@ export default ({ Vue, router, isServer }) => {
     const page_url = location.pathname + location.search;
     const link_area = areaOf(el);
     const site_section = sectionFromPath();
-    window.dataLayer.push({ event, link_id, link_text, link_url, page_url, link_area, site_section });
+    window[DL].push({ event, link_id, link_text, link_url, page_url, link_area, site_section });
   };
 
   const handleClick = (e) => {
@@ -226,29 +235,26 @@ export default ({ Vue, router, isServer }) => {
     const txt = labelOf(el) || '';
     const area = areaOf(el);
 
+    pushGtmLinkClick(el, href);
     if (area === 'nav') {
       const ev = mapNavEvent(rawHref, txt);
-      if (ev) {
-        pushEvent({ event: ev, el, href });
-        return;
-      }
+      if (ev) { pushEvent({ event: ev, el, href }); return; }
     }
     if (isExternalOther(url, txt)) {
-      pushEvent({ event: 'redirect_external-link', el, href });
-      return;
+      pushEvent({ event: 'redirect_external_link', el, href }); return;
     }
-    const currentSection = sectionFromPath(location.pathname);
-    if (currentSection === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
-    if (currentSection === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
-    if (currentSection === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
-    if (currentSection === 'home') return pushEvent({ event: 'redirect_home', el, href });
-    const targetSection = sectionFromPath(url ? url.pathname : '');
-    if (targetSection === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
-    if (targetSection === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
-    if (targetSection === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
-    if (targetSection === 'home') return pushEvent({ event: 'redirect_home', el, href });
+    const current = sectionFromPath(location.pathname);
+    if (current === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
+    if (current === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
+    if (current === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
+    if (current === 'home') return pushEvent({ event: 'redirect_home', el, href });
+    const target = sectionFromPath(url ? url.pathname : '');
+    if (target === 'docs') return pushEvent({ event: 'redirect_docs', el, href });
+    if (target === 'tables') return pushEvent({ event: 'redirect_tables', el, href });
+    if (target === 'backtest_results') return pushEvent({ event: 'redirect_backtest_results', el, href });
+    if (target === 'home') return pushEvent({ event: 'redirect_home', el, href });
 
-    pushEvent({ event: 'redirect_external-link', el, href });
+    pushEvent({ event: 'redirect_external_link', el, href });
   };
 
   document.addEventListener('click', handleClick, true);
