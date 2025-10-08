@@ -7,7 +7,7 @@ module.exports = {
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
-  title: 'Firefly by Fintrens: Verified Algo Trading & Backtest Results (5Y)',
+  title: 'Firefly by Fintrens: Verified Results',
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#description
    */
