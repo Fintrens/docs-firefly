@@ -19,11 +19,11 @@ search: false
 <table>
     <tr>
     <td>Capital</td>
-    <td>10,00,000</td>
+    <td>1,00,00,000.00</td>
     </tr>
     <tr>
     <td>Back Test Time period</td>
-    <td>01/01/2020 - 31/12/2024</td>
+    <td>01/09/2020 - 28/08/2025</td>
     </tr>
 </table>
 
@@ -31,18 +31,18 @@ search: false
 
 |Product|Index options|
 |:-|-:|
-|Total Profit/Loss|26,78,160|
-|% of Absolute Returns (5Y)|267.82|
-|% of Simple Annualized ROI|53.56|
-|% of Max Drawdown|-14.03|
-|% of Profit Trades|59.10|
-% of Loss Trades|40.90|
-|Avg Profit per trade|6,319.34|
-|Avg Loss per trade|-6,643.51|
-|Worst loss trade|-24,240|
-|Highest profit trade|27,045|
-|Calmer ratio|3.82|
-|Max drawdown days|24|
+|Total Profit/Loss|4,20,26,208.75|
+|% of Absolute Returns (5Y)|420.26|
+|% of Simple Annualized ROI|84.05|
+|% of Max Drawdown|-8.36|
+|% of Profit Trades|54.12|
+% of Loss Trades|45.88|
+|Avg Profit per trade|26,696.81|
+|Avg Loss per trade|-23,627.89|
+|Worst loss trade|-4,30,650|
+|Highest profit trade|2,09,850|
+|Calmer ratio|10.05|
+|Max drawdown days|33|
 
 ### Performance Chart
 
