@@ -15,7 +15,7 @@ search: false
   }
 </style>
  
- ### 1 Year Result From 06-01-2022 to 30-12-2022
+ ### Result From 06-01-2022 to 30-12-2022
 
 INSTRUMENT|ENTRY DATE |ENTRY TIME |ENTRY TRIGGER |ENTRY PRICE |EXIT DATE/CURRENT DATE |EXIT TIME/CURRENT TIME |EXIT PRICE/CURRENT PRICE |P&L   |P_L      |
 |--------------------|------------|------------|---------------|-------------|--------------|------------------------|------------------------|--------------------------|-------|----------|
