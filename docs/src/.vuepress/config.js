@@ -200,6 +200,7 @@ module.exports = {
                     'Options_Elysium_2022',
                     'Options_Elysium_2023',
                     'Options_Elysium_2024',
+                    'Options_Elysium_2025',
                   ]
                 }
               ]
@@ -219,6 +220,7 @@ module.exports = {
                     'Options_Ember_2022',
                     'Options_Ember_2023',
                     'Options_Ember_2024',
+                    'Options_Ember_2025'
                   ]
                 }
               ]
@@ -238,6 +240,7 @@ module.exports = {
                     'Options_Mirage_2022',
                     'Options_Mirage_2023',
                     'Options_Mirage_2024',
+                    'Options_Mirage_2025',
                   ]
                 }
               ]
