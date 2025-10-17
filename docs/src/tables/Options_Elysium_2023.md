@@ -15,7 +15,7 @@ search: false
   }
 </style>
  
- ### 1 Year Result From 02-01-2023 to 29-12-2023
+ ### Result From 02-01-2023 to 29-12-2023
 
 INSTRUMENT|ENTRY DATE |ENTRY TIME |ENTRY TRIGGER |ENTRY PRICE |EXIT DATE/CURRENT DATE |EXIT TIME/CURRENT TIME |EXIT PRICE/CURRENT PRICE |P&L   |P_L      |
 |--------------------|------------|------------|---------------|-------------|--------------|------------------------|------------------------|--------------------------|-------|----------|

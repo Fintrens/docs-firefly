@@ -15,7 +15,7 @@ search: false
   }
 </style>
  
- ### 1 Year Result From 01-01-2025 to 28-08-2025
+ ### Result From 01-01-2025 to 28-08-2025
 
 INSTRUMENT|ENTRY DATE|ENTRY TIME|ENTRY TRIGGER|ENTRY PRICE|EXIT DATE/CURRENT DATE|EXIT TIME/CURRENT TIME|EXIT PRICE/CURRENT PRICE|P&L| P_L |
 |--------------------|------------|------------|---------------|-------------|--------------|------------------------|------------------------|--------------------------|-------|----------|
