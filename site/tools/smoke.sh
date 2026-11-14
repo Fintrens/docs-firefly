@@ -11,6 +11,7 @@ cp -r "$HERE/dist/backtests" "$CI/webroot/backtests-release"; ln -s backtests-re
 cp "$HERE/deploy/nginx/backtests.conf" "$CI/fintrens.d/backtests.conf"
 cp "$HERE/deploy/nginx/backtests.conf" "$CI/webroot/backtests-release/.backtests.conf"      # must not be served
 cp "$HERE/deploy/nginx/docs.firefly.fintrens.com.conf" "$CI/conf.d/docs.conf"
+: > "$CI/le/options-ssl-nginx.conf"      # Certbot's shared TLS settings file exists on the server; empty here
 openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=docs.firefly.fintrens.com" \
   -keyout "$CI/le/live/docs.firefly.fintrens.com/privkey.pem" -out "$CI/le/live/docs.firefly.fintrens.com/fullchain.pem" 2>/dev/null
 cat > "$CI/conf.d/default.conf" <<'CONF'
@@ -64,10 +65,10 @@ has "$(hdr /backtests/)" 'x-content-type-options: nosniff' "security header inhe
 # old docs URLs → new homes
 redir() { got=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' -H 'Host: docs.firefly.fintrens.com' "http://localhost:$((PORT+1))$1"); printf '%-46s %s\n' "docs$1" "$got"; [ "$got" = "301 https://fintrens.com$2" ] || { echo "   want 301 https://fintrens.com$2"; fail=1; }; }
 redir / /backtests/
-redir /tables/Options_Elysium.html /backtests/elysium/
-redir /tables/Options_Elysium/ /backtests/elysium/
-redir /tables/Options_Ember_2024.html '/backtests/ember/#trades'
-redir /tables/Options_Mirage_2020.html '/backtests/mirage/#trades'
+redir /tables/Options_Elysium.html /backtests/
+redir /tables/Options_Elysium/ /backtests/
+redir /tables/Options_Ember_2024.html /backtests/
+redir /tables/Options_Mirage_2020.html /backtests/
 redir /guide/ /methodology/
 redir /guide/Backtesting-Results.html /backtests/
 redir /guide/Algorithmic-Trading.html /what-is-algo-trading/
