@@ -15,8 +15,8 @@
 #                — otherwise roll back the symlink and the conf and fail — and only then prune old
 #                releases by age, never the live one
 #
-# The old docs.firefly.fintrens.com redirect vhost is NOT installed by this workflow: it is a one-time
-# manual step at cutover (site/DEPLOY.md).
+# The docs.firefly.fintrens.com redirect vhost is NOT managed by this workflow: it was installed by hand
+# at cutover (site/DEPLOY.md).
 #
 # Repository (or organisation) secrets, the same names fintrens-home uses:
 #   DEPLOY_HOST      server IP or hostname

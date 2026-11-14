@@ -1,1 +1,0 @@
-![Image alt="Firefly Performance"](https://www.email.assets.fintrens.com/assets/ffp.jpg)

@@ -1,11 +1,8 @@
 # docs-firefly
 
-Firefly's published backtests. Two things live here:
-
-| Folder | What | Status |
-|---|---|---|
-| `site/` | The static backtest site served at `https://fintrens.com/backtests/` | Current |
-| `docs/`, `script/` | The old VuePress site at `docs.firefly.fintrens.com` | To be retired after cutover |
+Firefly's published backtests: the static site served at `https://fintrens.com/backtests/`, in `site/`.
+It replaced the VuePress docs site at `docs.firefly.fintrens.com` in November 2026; that domain now
+redirects here.
 
 Working on the site itself (adding a backtest, the CSV format, how the build works) is covered in
 [site/README.md](site/README.md). This page covers deploying it.
@@ -103,22 +100,15 @@ install the nginx rules by hand; after that, re-run the workflow.
 The fintrens.com server block must include `/etc/nginx/fintrens.d/*.conf` (the current one from
 fintrens-home does).
 
-## After the first deploy
+## The old docs domain
 
-These finish the move from the old docs site. Details and commands are in
-[site/DEPLOY.md](site/DEPLOY.md).
+`docs.firefly.fintrens.com` answers every request with a 301 to fintrens.com (tables and everything
+else to `/backtests/`, the old guide pages to `/methodology/` or `/what-is-algo-trading/`). The vhost
+is `site/deploy/nginx/docs.firefly.fintrens.com.conf`, installed by hand on the server as
+`/etc/nginx/conf.d/docs.firefly.fintrens.com.conf`; the deploy workflow does not manage it. Keep the
+DNS record and the certificate renewal for that domain, or the redirects stop working.
 
-1. **fintrens-home**: point the Backtest links at `/backtests/`, and add the backtests sitemap and
-   the `Disallow` lines for the data files to `robots.txt`.
-2. **Old domain**: install `site/deploy/nginx/docs.firefly.fintrens.com.conf` on the server so every
-   old docs URL redirects to its new page. Check its certificate paths first.
-3. **Search Console**: submit `https://fintrens.com/backtests/sitemap.xml`.
-4. **GTM**: add the `backtest_action` event to the site-events trigger and publish.
-5. **Retire the old site**: delete `docs/`, `script/` and `.github/workflows/build-and-deploy.yml`.
-
-## The old docs site (until it is retired)
-
-`.github/workflows/build-and-deploy.yml` still builds the VuePress site in `docs/` and uploads it on
-every push to `master` or `dev`. It uses its own, different settings, which are already configured:
-secrets `SSH_PRIVATE_KEY`, `SSH_HOST`, `SSH_USER`, `SSH_PORT` and the variable `REMOTE_PATH`, in the
-`prod` and `dev` environments. They are not used by the new site and can be removed with the workflow.
+The old workflow's settings are no longer used and can be deleted from the repository settings:
+secrets `SSH_PRIVATE_KEY`, `SSH_HOST`, `SSH_USER`, `SSH_PORT`, the variable `REMOTE_PATH`, and the
+`prod` and `dev` environments. The old site's files are still on the server in the folder
+`REMOTE_PATH` pointed to, with its `_backup_*` copies beside it; they are no longer served.

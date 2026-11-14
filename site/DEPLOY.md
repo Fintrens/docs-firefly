@@ -55,38 +55,29 @@ touch `site/`, without deploying.
    include by hand.
 3. Push the first tag and open `https://fintrens.com/backtests/`.
 
-## Cutover from docs.firefly.fintrens.com
+## Cutover from docs.firefly.fintrens.com (done 14 Nov 2026)
 
-Do these after `/backtests/` is live and checked.
+- `/backtests/` went live with `v2.0.0`.
+- The redirect vhost `deploy/nginx/docs.firefly.fintrens.com.conf` was installed by hand as
+  `/etc/nginx/conf.d/docs.firefly.fintrens.com.conf` (the previous vhost is kept on the server as
+  `/root/docs.firefly.fintrens.com.conf.bak`). To change a redirect, edit the file here, run
+  `tools/smoke.sh`, then copy it to the server and `nginx -t && systemctl reload nginx`.
+- The VuePress site (`docs/`), its backup script and its workflow were removed from this repository.
+- fintrens-home links to `/backtests/` and lists `backtests/sitemap.xml` in `robots.txt`, with
+  `Disallow: /backtests/data/` and `/backtests/version.json` so the raw data files are not crawled.
 
-1. **fintrens-home**: point the Backtest links at `/backtests/` (`data/site.yaml` → `links.backtests`,
-   two links in `layouts/partials/sitenav.html`, and the same partial in the firefly repo). In
-   `layouts/robots.txt` add `Sitemap: {{ "backtests/sitemap.xml" | absURL }}` and, as for Signals' data
-   files, `Disallow: /backtests/data/` and `Disallow: /backtests/version.json` so the raw CSV and JSON
-   files are not crawled as pages (the pages do not need them to be read: every number and chart is in
-   the HTML). Release it. Then
-   re-copy the built header and footer into `site/src/shell/` here if they changed.
-2. **Redirect the old domain.** On the server, compare `server_name` and the certificate paths in
-   `deploy/nginx/docs.firefly.fintrens.com.conf` with the vhost that serves the docs site today, then
-   replace that vhost with this file:
+Keep the DNS record and the certificate renewal for the old domain; the redirects only work while
+both exist.
 
-   ```bash
-   sudo cp docs.firefly.fintrens.com.conf /etc/nginx/conf.d/docs.firefly.fintrens.com.conf
-   sudo nginx -t && sudo systemctl reload nginx
-   curl -sI https://docs.firefly.fintrens.com/tables/Options_Elysium.html | grep -i '^location'
-   ```
+## Analytics
 
-   Keep the DNS record and the certificate renewal for the old domain; the redirects only work while
-   both exist.
-3. **Search Console**: submit `https://fintrens.com/backtests/sitemap.xml` under the fintrens.com
-   property and request indexing for `/backtests/` and the strategy pages.
-4. **Analytics**: the pages push the same events as fintrens-home (`cta_demo`, `outbound_click`, `faq_open`,
-   `scroll_depth`, `consent_choice` and the other click events), which the GTM container already forwards.
-   One event is new: `backtest_action` (label `range 1Y`, `trades 2024`, `combine elysium:1,ember:2`,
-   `card elysium`). Add it to the trigger regex of the tag `GA4 - Site events (fintrens.com)` in GTM and
-   publish the container; until then it is pushed but not sent to GA4.
-5. **Share image** (optional): pages use the site-wide `/og.png`. A backtest-specific 1200×630 image
-   would need designing and a path in `build.mjs`.
-6. **Retire the old site in this repo**: delete `docs/`, `script/` and
-   `.github/workflows/build-and-deploy.yml`. Until then every push to `master` or `dev` still builds
-   and uploads the VuePress site to its old folder.
+The pages push the same events as fintrens-home (`cta_demo`, `outbound_click`, `faq_open`,
+`scroll_depth`, `consent_choice` and the other click events), which the GTM container already
+forwards. One event is specific to this site: `backtest_action` (label `range 1Y`, `trades 2024`,
+`combine elysium:1,ember:2`, `card elysium`). It must be in the trigger regex of the tag
+`GA4 - Site events (fintrens.com)` in GTM to reach GA4.
+
+## Header and footer
+
+`src/shell/` is a copy of the built fintrens-home header, footer and their CSS/JS. When the main
+site's navigation changes, re-copy them (README.md) and release.

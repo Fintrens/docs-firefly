@@ -65,7 +65,6 @@ column is missing or a date or number cannot be read. A trade's P&L is booked on
 - `src/shell/` — the Fintrens site bar, footer, consent banner and their CSS/JS, copied from the built
   `fintrens-home` site. Re-copy when the main site's navigation changes.
 - `site.json` — site-wide settings: base path, origin, GTM id, the costs sentence, the call-to-action link.
-- `tools/import-legacy.mjs` — one-off converter from the old VuePress tables in `docs/src/tables/`.
 
 Fonts are served by fintrens.com at `/fonts/`; the build copies them into `dist/fonts/` for local
 preview only when `../../fintrens-home` is checked out.
