@@ -77,5 +77,6 @@ node tools/check.mjs      # pages, titles, descriptions, links, script syntax
 tools/smoke.sh            # nginx include and old-domain redirects through a real nginx (needs docker)
 ```
 
-Releases go out by pushing a `v*` tag; see DEPLOY.md for the workflow, the one-time server setup and
-the cutover from docs.firefly.fintrens.com.
+Releases go out by pushing a `v*` tag. The repository README (`../README.md`) has the deploy steps and
+the GitHub secrets to add (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, optional `DEPLOY_PORT`);
+DEPLOY.md has the workflow in detail and the cutover from docs.firefly.fintrens.com.
