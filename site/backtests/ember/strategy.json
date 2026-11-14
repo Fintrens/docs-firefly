@@ -1,0 +1,12 @@
+{
+  "name": "Ember",
+  "tagline": "The same rules for a ₹10 lakh account",
+  "summary": "Ember applies Firefly's hedged option-selling rules on Nifty weekly options to a ₹10 lakh account, combining intraday, overnight and weekly-direction entries. Every short option is paired with a bought hedge.",
+  "capital": 1000000,
+  "exchange": "NSE",
+  "underlying": "Nifty 50",
+  "segment": "Index options",
+  "style": "Hedged option selling",
+  "holding": "Intraday and overnight",
+  "order": 2
+}

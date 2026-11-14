@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Builds the static backtest site into site/dist/backtests/ (plain files, served by nginx).
 //   node build.mjs            → site/dist
-// Add a backtest: drop a CSV into data/trades/, add an entry to data/strategies.json, rebuild. See README.md.
+// Add a backtest: make a folder backtests/<id>/ with its trade CSV(s) and a strategy.json, rebuild. Every folder
+// there is picked up automatically; there is no list to edit. See README.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -10,12 +11,13 @@ import { execSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+process.on('uncaughtException', e => { console.error('build failed: ' + e.message); process.exit(1); });   // data mistakes read as one line, not a stack
 const require = createRequire(import.meta.url);
 const C = require('./src/core.js');
 const Ch = require('./src/charts.js');
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const rd = p => fs.readFileSync(path.join(HERE, p), 'utf8');
-const cfg = JSON.parse(rd('data/strategies.json'));
+const cfg = { site: JSON.parse(rd('site.json')) };
 const BASE = cfg.site.base, ORIGIN = cfg.site.origin;
 // Version stamp (the deploy workflow sets VERSION to the git tag; the server check reads version.json)
 const sh = c => { try { return execSync(c, { cwd: HERE, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return ''; } };
@@ -31,16 +33,15 @@ const isoDate = (s, where) => {
   m = s.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/); if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   throw new Error(`${where}: date "${s}" is not YYYY-MM-DD or DD-MM-YYYY`);
 };
-function loadTrades(file) {
-  const lines = rd('data/' + file).split(/\r?\n/).filter(l => l.trim());
+function loadFile(file, map) {
+  const lines = rd(file).split(/\r?\n/).filter(l => l.trim());
   const head = lines[0].split(',').map(h => h.trim().toLowerCase());
   for (const c of COLS) if (!head.includes(c)) throw new Error(`${file}: missing column "${c}" (need ${COLS.join(', ')})`);
   const ix = Object.fromEntries(head.map((h, i) => [h, i]));
-  const map = new Map();
   lines.slice(1).forEach((l, n) => {
     const c = l.split(',').map(x => x.trim()), where = `${file} line ${n + 2}`;
     const leg = {
-      trade: c[ix.trade], instrument: c[ix.instrument], side: c[ix.side].toUpperCase(),
+      trade: file + '#' + c[ix.trade], instrument: c[ix.instrument], side: c[ix.side].toUpperCase(),
       entry_date: isoDate(c[ix.entry_date], where), entry_time: c[ix.entry_time], entry_price: c[ix.entry_price],
       exit_date: isoDate(c[ix.exit_date], where), exit_time: c[ix.exit_time], exit_price: c[ix.exit_price],
       points: c[ix.points], pnl: c[ix.pnl], tag: ix.tag !== undefined ? c[ix.tag] || '' : '',
@@ -50,11 +51,32 @@ function loadTrades(file) {
     const t = map.get(leg.trade); t.legs.push(leg); t.pnl += +leg.pnl || 0;
     const e = leg.exit_date + ' ' + leg.exit_time; if (e > t.exit) t.exit = e;
   });
-  return [...map.values()].sort((a, b) => (a.exit < b.exit ? -1 : a.exit > b.exit ? 1 : 0));
+}
+/** All CSV files in a strategy folder, read as one log. Trade ids only need to be unique within a file. */
+function loadTrades(dir) {
+  const files = fs.readdirSync(path.join(HERE, dir)).filter(f => f.toLowerCase().endsWith('.csv')).sort();
+  if (!files.length) throw new Error(`${dir}: no .csv trade file`);
+  const map = new Map();
+  for (const f of files) loadFile(dir + '/' + f, map);
+  const list = [...map.values()].sort((a, b) => (a.exit < b.exit ? -1 : a.exit > b.exit ? 1 : 0));
+  list.forEach((t, n) => t.legs.forEach(l => (l.trade = n + 1)));   // published ids: 1, 2, 3… in closing order
+  return list;
 }
 
-const strategies = cfg.strategies.map(s => {
-  const trades = loadTrades(s.trades);
+// Every folder in backtests/ is a strategy: its name is the id (and the URL), strategy.json describes it.
+const META = { name: 'string', tagline: 'string', summary: 'string', capital: 'number', exchange: 'string', underlying: 'string', segment: 'string', style: 'string', holding: 'string' };
+const found = fs.readdirSync(path.join(HERE, 'backtests'), { withFileTypes: true }).filter(e => e.isDirectory() && !e.name.startsWith('.') && !e.name.startsWith('_')).map(e => {
+  const id = e.name, dir = 'backtests/' + id;
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(id)) throw new Error(`${dir}: folder name becomes the URL, so use lower-case letters, digits and hyphens only`);
+  if (!fs.existsSync(path.join(HERE, dir, 'strategy.json'))) throw new Error(`${dir}: missing strategy.json (copy one from another strategy folder)`);
+  let meta; try { meta = JSON.parse(rd(dir + '/strategy.json')); } catch (err) { throw new Error(`${dir}/strategy.json is not valid JSON: ${err.message}`); }
+  for (const [k, t] of Object.entries(META)) if (typeof meta[k] !== t || meta[k] === '' || (t === 'number' && !(meta[k] > 0))) throw new Error(`${dir}/strategy.json: "${k}" is required (${t === 'number' ? 'a positive number' : 'text'})`);
+  return { ...meta, id, dir };
+}).sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name));
+if (!found.length) throw new Error('backtests/: no strategy folders');
+
+const strategies = found.map(s => {
+  const trades = loadTrades(s.dir);
   const first = trades[0].exit.slice(0, 10), last = trades[trades.length - 1].exit.slice(0, 10);
   const start = C.weekdays(first, 1)[0];
   const days = new Array(C.dayIndex(start, last) + 1).fill(0);
@@ -64,6 +86,8 @@ const strategies = cfg.strategies.map(s => {
   const ts = C.tradeStats(trades.map(t => t.pnl), a.years * 365.25 / 7);
   return { ...s, tradesList: trades, series, a, ts };
 });
+
+cfg.site.updated = strategies.map(s => s.a.end).sort().pop();   // date of the newest trade: sitemap lastmod, dateModified
 
 // ---------- assets ----------
 fs.rmSync(DIST, { recursive: true, force: true });

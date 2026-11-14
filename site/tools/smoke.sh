@@ -41,7 +41,7 @@ fail=0
 expect() { got=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT$1"); printf '%-46s %s (want %s)\n' "$1" "$got" "$2"; [ "$got" = "$2" ] || fail=1; }
 expect /backtests 301
 expect /backtests/ 200
-for s in $(node -e "for(const s of require('$HERE/data/strategies.json').strategies)console.log(s.id)"); do
+for s in $(node -e "for(const s of require('$HERE/dist/backtests/data/series.json').strategies)console.log(s.id)"); do
   expect "/backtests/$s/" 200
   y=$(ls "$HERE/dist/backtests/data/$s" | grep -o 'trades-[0-9]*\.csv$' | tail -1); expect "/backtests/data/$s/$y" 200
 done

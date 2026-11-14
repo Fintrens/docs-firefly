@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // One-off: convert the old VuePress trade tables (docs/src/tables/Options_<Name>_<year>.md)
-// into the CSV format the new site reads (site/data/trades/<id>.csv). See site/README.md.
+// into the CSV format the new site reads (site/backtests/<id>/trades.csv). See site/README.md.
 // The old tables come in five column layouts (extra SELL/COVER column, a strategy-name column,
 // Excel serial dates, thousands separators); this normalises all of them.
 import fs from 'node:fs';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(HERE, '../../docs/src/tables');
-const OUT = path.join(HERE, '../data/trades');
+const OUT = path.join(HERE, '../backtests');
 const NAMES = process.argv.slice(2).length ? process.argv.slice(2) : ['Elysium', 'Ember', 'Mirage'];
 
 const num = s => { const v = Number(String(s).replace(/,/g, '').trim()); return Number.isFinite(v) ? v : null; };
@@ -57,6 +57,7 @@ for (const name of NAMES) {
       rows.push([trade, l.instrument, l.side, l.entry_date, l.entry_time, l.entry_price, l.exit_date, l.exit_time, l.exit_price, l.points, p, tag].join(','));
   }
   const id = name.toLowerCase();
-  fs.writeFileSync(path.join(OUT, id + '.csv'), rows.join('\n') + '\n');
+  fs.mkdirSync(path.join(OUT, id), { recursive: true });
+  fs.writeFileSync(path.join(OUT, id, 'trades.csv'), rows.join('\n') + '\n');
   console.log(`${id}: ${trade} trades, net ${total.toFixed(2)}, ${missing} trades without a rupee P&L (counted as 0)`);
 }

@@ -1,0 +1,10 @@
+{
+  "base": "/backtests/",
+  "origin": "https://fintrens.com",
+  "gtm": "GTM-KD6JH3W6",
+  "costs": "Results are computed from entry and exit prices in the trade log. Brokerage, statutory charges, taxes and slippage are not deducted.",
+  "cta": {
+    "label": "Schedule a demo",
+    "href": "/demo-date-scheduler/"
+  }
+}

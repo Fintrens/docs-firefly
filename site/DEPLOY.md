@@ -33,8 +33,7 @@ git push origin v2.0.0            # → Actions → "Deploy backtests"
 Any tag can be re-deployed from Actions → Deploy backtests → Run workflow. Rolling back is deploying
 the previous tag. The tag is shown in the page footer and at `/backtests/version.json`.
 
-A new backtest goes live the same way: add the CSV and the `strategies.json` entry (README.md),
-commit, tag, push.
+A new backtest goes live the same way: add its folder under `backtests/` (README.md), commit, tag, push.
 
 `check-backtests.yml` runs the same build, checks and smoke test on pushes and pull requests that
 touch `site/`, without deploying.

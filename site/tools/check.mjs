@@ -7,8 +7,9 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const cfg = JSON.parse(fs.readFileSync(path.join(HERE, '../data/strategies.json'), 'utf8'));
-const BASE = cfg.site.base, OUT = path.join(HERE, '../dist', BASE);
+const BASE = JSON.parse(fs.readFileSync(path.join(HERE, '../site.json'), 'utf8')).base, OUT = path.join(HERE, '../dist', BASE);
+// the strategy list is whatever the build found in backtests/ and published
+const cfg = { strategies: JSON.parse(fs.readFileSync(path.join(OUT, 'data/series.json'), 'utf8')).strategies };
 const errors = [], bad = m => errors.push(m);
 const need = f => { const p = path.join(OUT, f); if (!fs.existsSync(p) || !fs.statSync(p).size) bad(`missing ${f}`); return p; };
 

@@ -11,14 +11,30 @@ python3 -m http.server 4173 -d dist     # preview at http://localhost:4173/backt
 
 ## Add or update a backtest
 
-1. Put the trade log at `data/trades/<id>.csv` (format below).
-2. Add an entry to `data/strategies.json` (`id`, `name`, `tagline`, `summary`, `capital`, the descriptive
-   fields and `trades: "trades/<id>.csv"`). Set `site.updated` to the date of the newest data.
-3. `node build.mjs`. The new strategy gets its own page and appears on the overview, in the
-   side-by-side table, in the combine tool and in the sitemap. Nothing else needs editing.
+Each strategy is a folder in `backtests/`. The build picks up every folder there; there is no list to edit.
 
-To extend an existing backtest, append rows to its CSV and rebuild. Every number and chart is computed
-from the CSV; no metric is typed by hand.
+```
+backtests/
+  elysium/
+    strategy.json      name, capital and description
+    trades.csv         the trade log (any file name, one or more .csv files)
+```
+
+**New strategy**
+
+1. Make `backtests/<id>/`. The folder name is the URL (`/backtests/<id>/`): lower-case letters, digits and hyphens.
+2. Put the trade log in it as one or more `.csv` files (format below).
+3. Copy a `strategy.json` from another folder and edit it. `name`, `tagline`, `summary`, `capital`,
+   `exchange`, `underlying`, `segment`, `style` and `holding` are required; `order` sets its position
+   on the overview (lowest first).
+4. `node build.mjs`. The strategy gets its own page and appears on the overview, in the side-by-side
+   table, in the combine tool and in the sitemap.
+
+**More data for an existing strategy**: append rows to its CSV, or drop another `.csv` in the folder
+(for example one per year). All files in a folder are read as one log.
+
+Every number and chart is computed from the CSVs; no metric is typed by hand. A folder whose name
+starts with `_` is skipped, which is a way to park a draft.
 
 ### Trade CSV format
 
@@ -27,7 +43,7 @@ the same `trade` value.
 
 | Column | Meaning |
 |---|---|
-| `trade` | Any id; rows with the same id are one trade |
+| `trade` | Any id; rows with the same id are one trade. Only needs to be unique within a file |
 | `instrument` | e.g. `NIFTY2410421800PE` |
 | `side` | `BUY` or `SHORT` |
 | `entry_date`, `exit_date` | `YYYY-MM-DD` (or `DD-MM-YYYY`) |
@@ -48,6 +64,7 @@ column is missing or a date or number cannot be read. A trade's P&L is booked on
 - `src/app.js` — hover readouts, period switch, trade log (one CSV per year, fetched on demand), combine tool.
 - `src/shell/` — the Fintrens site bar, footer, consent banner and their CSS/JS, copied from the built
   `fintrens-home` site. Re-copy when the main site's navigation changes.
+- `site.json` — site-wide settings: base path, origin, GTM id, the costs sentence, the call-to-action link.
 - `tools/import-legacy.mjs` — one-off converter from the old VuePress tables in `docs/src/tables/`.
 
 Fonts are served by fintrens.com at `/fonts/`; the build copies them into `dist/fonts/` for local

@@ -1,0 +1,12 @@
+{
+  "name": "Elysium",
+  "tagline": "Hedged Nifty option spreads at full size",
+  "summary": "Elysium runs Firefly's hedged option-selling rules on Nifty weekly options at the largest position size of the three. Every short option is paired with a bought hedge, so the loss on each position is limited when it is opened.",
+  "capital": 10000000,
+  "exchange": "NSE",
+  "underlying": "Nifty 50",
+  "segment": "Index options",
+  "style": "Hedged option selling",
+  "holding": "Intraday and overnight",
+  "order": 1
+}
