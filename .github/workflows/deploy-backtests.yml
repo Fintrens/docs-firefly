@@ -1,0 +1,203 @@
+# Deploy the backtest site (https://fintrens.com/backtests/) when a version tag is pushed, or on demand.
+#
+#   git tag -a v2.0.0 -m "Backtests on fintrens.com" && git push origin v2.0.0
+#
+# Same model as fintrens-home and fintrens-lantern: the site is BUILT ON THE RUNNER and the finished files
+# are pushed to the server over SSH, so the server needs nothing but nginx and an SSH user that can write
+# the web root.
+#
+#   1. build   — node build.mjs with the tag as the version stamp, tools/check.mjs, the nginx smoke test,
+#                then one tarball of dist/backtests/ plus deploy/nginx/backtests.conf
+#   2. deploy  — unpack into WEBROOT/backtests-releases/<tag>-<stamp>, install
+#                /etc/nginx/fintrens.d/backtests.conf if it changed (sudoers line in site/DEPLOY.md; the
+#                previous file goes back if nginx -t fails), flip the WEBROOT/backtests symlink, verify on
+#                the box that /backtests/ serves THIS release and the fintrens.com home page still answers
+#                — otherwise roll back the symlink and the conf and fail — and only then prune old
+#                releases by age, never the live one
+#
+# The old docs.firefly.fintrens.com redirect vhost is NOT installed by this workflow: it is a one-time
+# manual step at cutover (site/DEPLOY.md).
+#
+# Repository (or organisation) secrets, the same names fintrens-home uses:
+#   DEPLOY_HOST      server IP or hostname
+#   DEPLOY_USER      SSH user that can write WEBROOT
+#   DEPLOY_SSH_KEY   private key (ed25519) whose public half is in that user's authorized_keys
+#   DEPLOY_PORT      optional, defaults to 22
+# Repository variables, optional:
+#   WEBROOT          defaults to /srv/www/static/fintrens   (the fintrens.com web root)
+
+name: Deploy backtests
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag to deploy (defaults to the ref you run this from)"
+        required: false
+        default: ""
+
+concurrency:
+  group: deploy-fintrens-backtests
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and check
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      release: ${{ steps.meta.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Release name
+        id: meta
+        run: |
+          VERSION="${{ inputs.ref || github.ref_name }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release=${VERSION//\//-}-$(date -u +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+          echo "deploying $VERSION ($(git rev-parse --short HEAD))"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build, check, smoke test
+        working-directory: site
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -e
+          node build.mjs
+          node tools/check.mjs
+          tools/smoke.sh
+          cp deploy/nginx/backtests.conf dist/backtests/.backtests.conf
+          tar -czf ../site.tar.gz -C dist/backtests .
+          ls -la ../site.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backtests
+          path: site.tar.gz
+          retention-days: 14
+
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      RELEASE: ${{ needs.build.outputs.release }}
+      VERSION: ${{ needs.build.outputs.version }}
+      WEBROOT: ${{ vars.WEBROOT || '/srv/www/static/fintrens' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: backtests
+
+      - name: Prepare release directory
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: RELEASE,WEBROOT
+          script: |
+            set -e
+            mkdir -p "$WEBROOT/backtests-releases/$RELEASE"
+            echo "release dir: $WEBROOT/backtests-releases/$RELEASE"
+
+      - name: Upload site
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          source: site.tar.gz
+          target: ${{ env.WEBROOT }}/backtests-releases/${{ env.RELEASE }}
+
+      - name: Activate release
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: RELEASE,VERSION,WEBROOT
+          script: |
+            set -e
+            REL="$WEBROOT/backtests-releases/$RELEASE"
+            LIVE_CONF=/etc/nginx/fintrens.d/backtests.conf
+            BAK="$WEBROOT/.backtests.conf.bak"
+            cd "$REL" && tar -xzf site.tar.gz && rm -f site.tar.gz
+            test -f index.html && test -f version.json
+            PREV="$(readlink -f "$WEBROOT/backtests" 2>/dev/null || true)"     # what is live now, to roll back to
+            CONF_CHANGED=0; CONF_NEW=0
+
+            reload_nginx() { sudo -n /usr/sbin/nginx -t && sudo -n /usr/bin/systemctl reload nginx; }
+            restore_conf() {
+              [ "$CONF_CHANGED" = 1 ] || return 0
+              if [ "$CONF_NEW" = 1 ]; then sudo -n /usr/bin/rm -f "$LIVE_CONF" || echo "::error::remove $LIVE_CONF by hand"
+              elif [ -w "$LIVE_CONF" ]; then cat "$BAK" > "$LIVE_CONF"
+              elif [ -n "$PREV" ] && cmp -s "$BAK" "$PREV/.backtests.conf"; then sudo -n /usr/bin/cp "$PREV/.backtests.conf" "$LIVE_CONF"
+              else echo "::error::could not put the previous backtests.conf back — restore $LIVE_CONF from $BAK by hand"; return 0; fi
+              reload_nginx && echo "previous backtests.conf restored"
+            }
+            rollback() {
+              echo "::error::$1 — rolling back"
+              restore_conf || true
+              if [ -n "$PREV" ] && [ -d "$PREV" ]; then
+                ln -sfn "$PREV" "$WEBROOT/backtests.next" && mv -Tf "$WEBROOT/backtests.next" "$WEBROOT/backtests" && echo "backtests -> $PREV again"
+              else
+                rm -f "$WEBROOT/backtests" && echo "first release: backtests symlink removed"
+              fi
+              exit 1
+            }
+
+            # 1. nginx include first (nothing new is live yet if it fails): apply only if it changed, keep a copy to go back to
+            CONF="$REL/.backtests.conf"
+            if [ -f "$CONF" ] && ! cmp -s "$CONF" "$LIVE_CONF" 2>/dev/null; then
+              if [ -f "$LIVE_CONF" ]; then cp "$LIVE_CONF" "$BAK"; else CONF_NEW=1; fi
+              if sudo -n /usr/bin/cp "$CONF" "$LIVE_CONF" 2>/dev/null; then
+                CONF_CHANGED=1
+                reload_nginx || rollback "nginx -t or reload failed on the new backtests.conf"
+                echo "nginx include updated and reloaded"
+              elif [ "$CONF_NEW" = 1 ]; then
+                # nothing is live yet and /backtests/ cannot work without the include: stop here, keep the release folder for the command below
+                echo "::error::$LIVE_CONF is not installed and the deploy user cannot install it (no passwordless sudo). Nothing was changed."
+                echo "::error::Once, on the server: sudo mkdir -p /etc/nginx/fintrens.d && sudo cp $CONF $LIVE_CONF && sudo nginx -t && sudo systemctl reload nginx — then re-run this workflow. To let future deploys do it themselves, add the sudoers line from site/DEPLOY.md."
+                exit 1
+              else
+                echo "::warning::backtests.conf changed but could not be applied (no passwordless sudo); the previous rules stay live. Copy it by hand: sudo cp $CONF $LIVE_CONF && sudo nginx -t && sudo systemctl reload nginx"
+              fi
+            fi
+
+            # 2. atomic switch: nginx serves /backtests/ from WEBROOT/backtests
+            ln -sfn "$REL" "$WEBROOT/backtests.next" && mv -Tf "$WEBROOT/backtests.next" "$WEBROOT/backtests"
+            echo "live: $WEBROOT/backtests -> $REL"
+
+            # 3. verify on this box (no CDN or DNS in the way): /backtests/ answers 200 from THIS release and the fintrens.com
+            #    home page still answers; otherwise everything above is undone and the run fails
+            sleep 1
+            ask() { curl -sk --max-time 15 --resolve fintrens.com:443:127.0.0.1 "$@"; }
+            code=$(ask -o /dev/null -w '%{http_code}' https://fintrens.com/backtests/ || true)
+            ver=$(ask https://fintrens.com/backtests/version.json | head -c 200 || true)
+            home=$(ask -o /dev/null -w '%{http_code}' https://fintrens.com/ || true)
+            echo "backtests: $code · version.json: $ver · home: $home"
+            [ "$code" = 200 ] || rollback "/backtests/ returned $code (is /etc/nginx/fintrens.d/*.conf included by the fintrens.com vhost?)"
+            printf '%s' "$ver" | grep -q "\"version\":\"$VERSION\"" || rollback "/backtests/version.json is not $VERSION"
+            [ "$home" = 200 ] || rollback "the fintrens.com home page returned $home"
+            ask https://fintrens.com/robots.txt | grep -q "backtests/sitemap.xml" || echo "::warning::https://fintrens.com/robots.txt does not list https://fintrens.com/backtests/sitemap.xml (add it in fintrens-home: layouts/robots.txt)"
+
+            # 4. only now prune: by time (names do not sort by age), never the live release; keep the 4 newest older ones
+            ls -1dt "$WEBROOT"/backtests-releases/*/ 2>/dev/null | sed 's#/$##' | grep -vxF "$REL" | tail -n +5 | xargs -r rm -rf
+            echo "releases kept: $(ls -1 "$WEBROOT/backtests-releases" | tr '\n' ' ')"

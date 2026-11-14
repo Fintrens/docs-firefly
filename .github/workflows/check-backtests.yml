@@ -1,0 +1,41 @@
+# Check the backtest site (site/) on every push and pull request that touches it: build, script syntax,
+# sanity checks, and the nginx include plus the old-domain redirects served by a real nginx.
+# Deploys are separate: deploy-backtests.yml, on a version tag.
+
+name: Check backtests
+
+on:
+  push:
+    branches: [master, dev]
+    paths: ["site/**", ".github/workflows/check-backtests.yml"]
+  pull_request:
+    paths: ["site/**", ".github/workflows/check-backtests.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build and nginx smoke test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build
+        env:
+          VERSION: ci-${{ github.sha }}
+        run: node build.mjs
+
+      - name: Sanity checks
+        run: node tools/check.mjs
+
+      - name: nginx smoke test
+        run: tools/smoke.sh
