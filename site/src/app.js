@@ -10,9 +10,39 @@
   let seriesP;
   const getSeries = () => seriesP || (seriesP = fetch(base + 'data/series.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }));
 
-  /* ---------- analytics: the same dataLayer event shape fintrens-home's www.js pushes ---------- */
-  const track = (name, params) => { (window.dataLayer = window.dataLayer || []).push(Object.assign({ event: name, page_kind: document.body.dataset.kind || '', page_path: location.pathname }, params || {})); };
-  document.addEventListener('click', e => { const a = e.target.closest('a[href*="demo-date-scheduler"]'); if (a) track('cta_demo', { label: (a.textContent || '').trim() }); });
+  /* ---------- analytics: the same events, keys and click rules as fintrens-home's www.js, so the GTM container's
+     existing triggers and GA4 dimensions (label, page_kind, href, percent) apply here unchanged. One event is new:
+     backtest_action (label = "range 1Y", "trades 2024", "combine elysium:1,ember:2", "card elysium"). ---------- */
+  const EV_KEYS = ['label', 'side', 'href', 'subject', 'form_kind', 'lead_type', 'percent'];
+  const track = (name, params) => {
+    const p = Object.assign({ page_kind: document.body.dataset.kind || '', page_path: location.pathname }, params || {}), clear = {};
+    EV_KEYS.forEach(k => { clear[k] = undefined; });   // GTM keeps old keys; clear the ones this event does not set
+    try { (window.dataLayer = window.dataLayer || []).push(Object.assign({ event: name }, clear, p)); } catch (e) {}
+    try { if (window.clarity) { window.clarity('event', name); if (p.label) window.clarity('set', name, String(p.label).slice(0, 60)); } } catch (e) {}
+  };
+  (function () {
+    const here = location.hostname.replace(/^www\./, '');
+    document.addEventListener('click', e => {
+      const a = e.target.closest('a[href]'); if (!a) return;
+      const href = a.getAttribute('href') || ''; let u; try { u = new URL(a.href); } catch (err) { return; }
+      const label = (a.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+      if (a.classList.contains('scard')) { track('backtest_action', { label: 'card ' + u.pathname.replace(base, '').replace(/\/$/, ''), href: u.pathname }); return; }
+      if (href.startsWith('mailto:')) { track('email_click', { label }); return; }
+      if (href.startsWith('tel:')) { track('phone_click', { label }); return; }
+      if (/^\/join\/?$/.test(u.pathname) || /aonelink\.in/.test(u.hostname)) { track('broker_join_click', { label }); return; }
+      if (/wa\.me|whatsapp\.com/.test(u.hostname)) { track('whatsapp_click', { label }); return; }
+      if (/t\.me/.test(u.hostname)) { track('telegram_click', { label }); return; }
+      if (u.hostname.replace(/^www\./, '') !== here) { track('outbound_click', { label, href: u.hostname + u.pathname }); return; }
+      if (u.pathname.startsWith('/signals/')) { track('signals_click', { label, href: u.pathname }); return; }
+      if (/^\/demo-date-scheduler\//.test(u.pathname)) { track('cta_demo', { label }); return; }
+      if (/^\/partner-with-us\//.test(u.pathname)) { track('cta_partner', { label }); return; }
+      if (/^\/get-started\//.test(u.pathname)) { track('cta_get_started', { label }); return; }
+    }, { capture: true });
+    document.addEventListener('toggle', e => { const d = e.target; if (d.tagName === 'DETAILS' && d.open && d.closest('.faq')) track('faq_open', { label: ((d.querySelector('summary') || {}).textContent || '').trim().slice(0, 80) }); }, true);
+    document.addEventListener('fx:consent', e => track('consent_choice', { label: e.detail }));
+    const marks = { 25: 0, 50: 0, 75: 0, 100: 0 };
+    addEventListener('scroll', () => { const h = document.documentElement, pct = Math.round((scrollY + innerHeight) / h.scrollHeight * 100); for (const m in marks) if (!marks[m] && pct >= m) { marks[m] = 1; track('scroll_depth', { label: m, percent: +m }); } }, { passive: true });
+  })();
 
   /* ---------- a pair of time charts (P&L on top, drawdown below) sharing one hover position ----------
      model(): { dates, lines:[{name, values, color, width}], dd:[], daily:[] }  — already cut to the visible period */
@@ -58,7 +88,7 @@
       return { dates: a.dates.slice(from), dd: a.dd.slice(from), daily: s.days.slice(from), lines: [{ name: s.name, values: a.equity.slice(from).map(v => v - b), color: Ch.COLORS[0] }] };
     });
     $$('[data-range] button', strat).forEach(btn => btn.addEventListener('click', () => {
-      range = +btn.dataset.r; $$('[data-range] button', strat).forEach(x => x.classList.toggle('on', x === btn)); view.draw();
+      range = +btn.dataset.r; $$('[data-range] button', strat).forEach(x => x.classList.toggle('on', x === btn)); view.draw(); track('backtest_action', { label: 'range ' + btn.textContent });
     }));
     view.draw();
   }).catch(() => {});
@@ -99,7 +129,7 @@
         return [...map.values()].reverse(); // newest first
       }))).then(r => { rows = r; page = 0; render(); }).catch(() => { tbody.innerHTML = '<tr><td colspan="5" class="na">Could not load the trades. Please try again.</td></tr>'; });
     }
-    $$('[data-years-seg] button', log).forEach(b => b.addEventListener('click', () => load(b.dataset.y)));
+    $$('[data-years-seg] button', log).forEach(b => b.addEventListener('click', () => { load(b.dataset.y); track('backtest_action', { label: 'trades ' + b.dataset.y }); }));
     $('[data-prev]', pager).addEventListener('click', () => { page--; render(); log.scrollIntoView({ block: 'start' }); });
     $('[data-next]', pager).addEventListener('click', () => { page++; render(); log.scrollIntoView({ block: 'start' }); });
     const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); load(years[years.length - 1]); } }, { rootMargin: '300px' });
@@ -114,7 +144,7 @@
     const q = new URLSearchParams(location.search).get('mix');
     if (q) { all.forEach(s => (state[s.id].on = false)); q.split(',').forEach(p => { const [id, m] = p.split(':'); if (state[id]) { state[id].on = true; state[id].mult = Math.min(10, Math.max(0.5, Math.round((+m || 1) * 2) / 2)); } }); }
     const scaled = s => ({ start: s.start, capital: s.capital * state[s.id].mult, days: s.days.map(v => v * state[s.id].mult) });
-    let current = null;
+    let current = null, sent;
     const view = timeView(comb, () => current);
     const kpi = (l, v, c) => `<div class="kpi"><dt>${l}</dt><dd class="num ${c || ''}">${v}</dd></div>`;
 
@@ -126,7 +156,8 @@
         $('[data-mult]', p).textContent = st.mult + '×'; $('[data-cap]', p).textContent = C.inrShort(s.capital * st.mult);
         $('[data-dec]', p).disabled = !st.on || st.mult <= 0.5; $('[data-inc]', p).disabled = !st.on || st.mult >= 10;
       });
-      if (push) { const mix = picked.map(s => s.id + ':' + state[s.id].mult).join(','); history.replaceState(null, '', location.pathname + (mix ? '?mix=' + mix : '') + '#combine'); }
+      if (push) { const mix = picked.map(s => s.id + ':' + state[s.id].mult).join(',');
+        clearTimeout(sent); sent = setTimeout(() => track('backtest_action', { label: 'combine ' + (mix || 'none') }), 1500); history.replaceState(null, '', location.pathname + (mix ? '?mix=' + mix : '') + '#combine'); }
       const res = $('.result', comb); res.classList.toggle('empty', !picked.length);
       if (!picked.length) { $('[data-total]', comb).textContent = '₹0'; return; }
       const parts = picked.map(scaled), combo = C.combine(parts.map(p => ({ series: p, weight: 1 }))), ca = C.analyse(combo);

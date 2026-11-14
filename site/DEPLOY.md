@@ -60,8 +60,11 @@ touch `site/`, without deploying.
 Do these after `/backtests/` is live and checked.
 
 1. **fintrens-home**: point the Backtest links at `/backtests/` (`data/site.yaml` → `links.backtests`,
-   two links in `layouts/partials/sitenav.html`, and the same partial in the firefly repo), add
-   `Sitemap: {{ "backtests/sitemap.xml" | absURL }}` to `layouts/robots.txt`, and release it. Then
+   two links in `layouts/partials/sitenav.html`, and the same partial in the firefly repo). In
+   `layouts/robots.txt` add `Sitemap: {{ "backtests/sitemap.xml" | absURL }}` and, as for Signals' data
+   files, `Disallow: /backtests/data/` and `Disallow: /backtests/version.json` so the raw CSV and JSON
+   files are not crawled as pages (the pages do not need them to be read: every number and chart is in
+   the HTML). Release it. Then
    re-copy the built header and footer into `site/src/shell/` here if they changed.
 2. **Redirect the old domain.** On the server, compare `server_name` and the certificate paths in
    `deploy/nginx/docs.firefly.fintrens.com.conf` with the vhost that serves the docs site today, then
@@ -77,6 +80,13 @@ Do these after `/backtests/` is live and checked.
    both exist.
 3. **Search Console**: submit `https://fintrens.com/backtests/sitemap.xml` under the fintrens.com
    property and request indexing for `/backtests/` and the strategy pages.
-4. **Retire the old site in this repo**: delete `docs/`, `script/` and
+4. **Analytics**: the pages push the same events as fintrens-home (`cta_demo`, `outbound_click`, `faq_open`,
+   `scroll_depth`, `consent_choice` and the other click events), which the GTM container already forwards.
+   One event is new: `backtest_action` (label `range 1Y`, `trades 2024`, `combine elysium:1,ember:2`,
+   `card elysium`). Add it to the trigger regex of the tag `GA4 - Site events (fintrens.com)` in GTM and
+   publish the container; until then it is pushed but not sent to GA4.
+5. **Share image** (optional): pages use the site-wide `/og.png`. A backtest-specific 1200×630 image
+   would need designing and a path in `build.mjs`.
+6. **Retire the old site in this repo**: delete `docs/`, `script/` and
    `.github/workflows/build-and-deploy.yml`. Until then every push to `master` or `dev` still builds
    and uploads the VuePress site to its old folder.

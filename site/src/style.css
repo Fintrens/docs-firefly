@@ -26,6 +26,7 @@ body.bt{font-size:15.5px;overflow-x:hidden}
 .chips b{font-weight:600;font-size:14px}
 .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .stats{display:flex;flex-wrap:wrap;gap:12px 40px;margin:24px 0 0}
+.stats>div{display:flex;flex-direction:column-reverse}
 .stats dd{margin:0;font-size:clamp(20px,2.6vw,28px);font-weight:500;letter-spacing:-.02em}
 .sec{font-size:clamp(22px,2.6vw,28px);margin:44px 0 6px}
 .secp{color:var(--muted);max-width:76ch;margin-bottom:16px}
@@ -48,7 +49,7 @@ body.bt{font-size:15.5px;overflow-x:hidden}
 .kpis.five{grid-template-columns:repeat(5,1fr)}
 .kpi{background:var(--surface);padding:14px 16px;min-width:0}
 .kpi dd{margin:4px 0 0;font-size:clamp(19px,2.1vw,25px);font-weight:500;letter-spacing:-.02em;white-space:nowrap}
-.kpi p{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi dd.kn{font:400 12px var(--body);letter-spacing:0;color:var(--muted);margin-top:2px;white-space:normal}
 @media (max-width:980px){.kpis,.kpis.five{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:520px){.kpis,.kpis.five{grid-template-columns:1fr 1fr}.kpis.five .kpi:first-child{grid-column:1/-1}}
 

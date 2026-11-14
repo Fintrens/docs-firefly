@@ -43,6 +43,7 @@ expect /backtests 301
 expect /backtests/ 200
 for s in $(node -e "for(const s of require('$HERE/dist/backtests/data/series.json').strategies)console.log(s.id)"); do
   expect "/backtests/$s/" 200
+  expect "/backtests/$s" 301          # no duplicate URL without the trailing slash
   y=$(ls "$HERE/dist/backtests/data/$s" | grep -o 'trades-[0-9]*\.csv$' | tail -1); expect "/backtests/data/$s/$y" 200
 done
 expect /backtests/data/series.json 200

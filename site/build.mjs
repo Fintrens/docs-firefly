@@ -87,7 +87,9 @@ const strategies = found.map(s => {
   return { ...s, tradesList: trades, series, a, ts };
 });
 
-cfg.site.updated = strategies.map(s => s.a.end).sort().pop();   // date of the newest trade: sitemap lastmod, dateModified
+// sitemap lastmod and dateModified: the later of the newest trade and the last commit that changed site/ (never the build time,
+// so a redeploy without changes does not claim the pages changed)
+cfg.site.updated = [strategies.map(s => s.a.end).sort().pop(), sh('git log -1 --format=%cs -- .')].sort().pop();
 
 // ---------- assets ----------
 fs.rmSync(DIST, { recursive: true, force: true });
@@ -132,15 +134,15 @@ function page({ slug, title, desc, body, ld, kind, noindex }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${url}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Fintrens">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Fintrens"><meta property="og:locale" content="en_IN">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}">
-<meta property="og:image" content="${ORIGIN}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image" content="${ORIGIN}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(title)}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#0369A1">${noindex ? '\n<meta name="robots" content="noindex">' : ''}
 <link rel="preload" href="/fonts/manrope-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
 <style>${css}</style>
-${ld ? `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': ld })}</script>` : ''}
+${ld ? `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': ld.concat({ '@type': 'WebPage', '@id': url + '#page', url, name: title, description: desc, inLanguage: 'en-IN', dateModified: cfg.site.updated, isPartOf: { '@id': ORIGIN + '/#website' }, publisher: { '@id': ORIGIN + '/#org' } }) })}</script>` : ''}
 ${GTM_HEAD}
 </head>
 <body class="www bt" data-kind="${kind}" data-base="${BASE}">${GTM_BODY}
@@ -160,7 +162,7 @@ const ORG = { '@type': 'Organization', '@id': ORIGIN + '/#org', name: 'Fintrens 
 const crumbLd = items => ({ '@type': 'BreadcrumbList', itemListElement: items.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: ORIGIN + c[1] })) });
 const crumb = items => `<nav class="crumb" aria-label="Breadcrumb">${items.map((c, i) => (i < items.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a><span aria-hidden="true">›</span>` : `<span aria-current="page">${esc(c[0])}</span>`)).join('')}</nav>`;
 const tone = v => (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
-const kpi = (label, value, sub, cls = '') => `<div class="kpi"><dt>${label}</dt><dd class="num ${cls}">${value}</dd>${sub ? `<p>${sub}</p>` : ''}</div>`;
+const kpi = (label, value, sub, cls = '') => `<div class="kpi"><dt>${label}</dt><dd class="num ${cls}">${value}</dd>${sub ? `<dd class="kn">${sub}</dd>` : ''}</div>`;
 const row = (label, value, cls = '') => `<div><dt>${label}</dt><dd class="num ${cls}">${value}</dd></div>`;
 const period = a => `${C.fmtDate(a.start)} – ${C.fmtDate(a.end)}`;
 const yrs = a => `${a.start.slice(0, 4)}–${a.end.slice(0, 4)}`;
@@ -353,9 +355,9 @@ for (const s of strategies) {
   <h1>Firefly backtest results: every trade, published</h1>
   <p class="lede">The rules behind Firefly's algo trading, run on ${a_years(start, end)} years of Nifty options data and published trade by trade: equity curves, drawdowns, monthly returns with the losing months, and the full trade logs. Combine strategies and the numbers recalculate in your browser.</p>
   <dl class="stats">
-    <div><dd class="num">${totalTrades.toLocaleString('en-IN')}</dd><dt>trades published</dt></div>
-    <div><dd class="num">${strategies.length}</dd><dt>strategies</dt></div>
-    <div><dd class="num">${C.fmtMonth(start.slice(0, 7))} – ${C.fmtMonth(end.slice(0, 7))}</dd><dt>test period</dt></div>
+    <div><dt>trades published</dt><dd class="num">${totalTrades.toLocaleString('en-IN')}</dd></div>
+    <div><dt>strategies</dt><dd class="num">${strategies.length}</dd></div>
+    <div><dt>test period</dt><dd class="num">${C.fmtMonth(start.slice(0, 7))} – ${C.fmtMonth(end.slice(0, 7))}</dd></div>
   </dl>
   <div class="cta"><a class="btn" href="#combine">Combine strategies</a><a class="btn ghost" href="/methodology/">How Firefly works</a></div>
 </section>
@@ -449,14 +451,14 @@ for (const s of strategies) {
 
 // ---------- 404, version stamp ----------
 write('404.html', page({ slug: '404.html', kind: 'notfound', noindex: true, title: 'Page not found · Firefly backtests', desc: 'This backtest page does not exist.',
-  body: `<section class="wrap head"><p class="eyebrow">404</p><h1>Page not found</h1><p class="lede">There is no backtest page at this address. The published backtests are listed on the overview.</p><div class="cta"><a class="btn" href="${BASE}">All backtests</a><a class="btn ghost" href="/">Fintrens home</a></div></section><section class="wrap"><div class="scards">${strategies.map(stratCard).join('')}</div></section>` }));
+  body: `<section class="wrap head"><p class="eyebrow">404</p><h1>Page not found</h1><p class="lede">There is no backtest page at this address. The published backtests are listed on the overview.</p><div class="cta"><a class="btn" href="${BASE}">All backtests</a><a class="btn ghost" href="/">Fintrens home</a></div></section><section class="wrap"><h2 class="sec">Published backtests</h2><div class="scards">${strategies.map(stratCard).join('')}</div></section>` }));
 write('version.json', JSON.stringify({ version: VERSION, commit: COMMIT, built: new Date().toISOString().slice(0, 16) + 'Z', updated: cfg.site.updated }) + '\n');
 
 // ---------- sitemap + local-preview extras ----------
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${['', ...strategies.map(s => s.id + '/')].map(u => `  <url><loc>${ORIGIN}${BASE}${u}</loc><lastmod>${cfg.site.updated}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 // fonts live on fintrens.com at /fonts/; copy them for local preview only when the sibling repo is checked out
 const fonts = path.join(HERE, '../../fintrens-home/static/fonts');
-if (fs.existsSync(fonts)) fs.cpSync(fonts, path.join(DIST, 'fonts'), { recursive: true });
+if (fs.existsSync(fonts)) { fs.cpSync(fonts, path.join(DIST, 'fonts'), { recursive: true }); for (const f of ['favicon.ico', 'favicon-32x32.png', 'favicon-16x16.png', 'apple-touch-icon.png', 'site.webmanifest', 'og.png']) fs.copyFileSync(path.join(fonts, '..', f), path.join(DIST, f)); }
 fs.writeFileSync(path.join(DIST, 'index.html'), `<!doctype html><meta http-equiv="refresh" content="0;url=${BASE}"><a href="${BASE}">Backtests</a>`);
 
 // pre-compress every text file: the fintrens.com vhost has gzip_static on (CSV is not in its gzip_types, so this is what compresses the trade logs)
