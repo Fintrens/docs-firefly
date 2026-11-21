@@ -238,8 +238,7 @@ for (const s of strategies) {
     ${Ch.spark(a.equity, 340, 84)}
     <p class="side-cap"><span>Cumulative profit and loss</span><b class="num ${tone(a.net)}">${C.inrShort(a.net)}</b></p>
     <dl class="rows">
-      ${row('Market', esc(s.exchange) + ' · ' + esc(s.underlying))}
-      ${row('Segment', esc(s.segment))}
+      ${row('Market', esc(s.exchange) + ' · ' + esc(s.segment))}
       ${row('Style', esc(s.style))}
       ${row('Holding', esc(s.holding))}
       ${row('Capital', C.inr(s.capital))}
@@ -374,7 +373,7 @@ for (const s of strategies) {
   <aside class="head-side card" aria-label="Published strategies">
     <p class="side-h">Published strategies</p>
     <ul class="slist">
-      ${strategies.map(s => `<li><a href="${BASE}${s.id}/"><span><b>${esc(s.name)}</b><small>${esc(s.segment)} · ${esc(s.style)}</small></span><span class="num"><b class="${tone(s.a.ret)}">${C.signPct(s.a.ret, 0)}</b><small>${C.fmtMonth(s.a.start.slice(0, 7))} – ${C.fmtMonth(s.a.end.slice(0, 7))}</small></span></a></li>`).join('\n      ')}
+      ${strategies.map(s => `<li><a href="${BASE}${s.id}/"><span><b>${esc(s.name)}</b><small>${esc(s.segment)} · ${C.fmtMonth(s.a.start.slice(0, 7))} – ${C.fmtMonth(s.a.end.slice(0, 7))}</small></span><b class="num ${tone(s.a.ret)}">${C.signPct(s.a.ret, 0)}</b></a></li>`).join('\n      ')}
     </ul>
     <p class="note">Total return on each strategy's own capital and period. Hypothetical, before costs.</p>
   </aside>
