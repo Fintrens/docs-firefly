@@ -44,7 +44,7 @@ function loadFile(file, map) {
       trade: file + '#' + c[ix.trade], instrument: c[ix.instrument], side: c[ix.side].toUpperCase(),
       entry_date: isoDate(c[ix.entry_date], where), entry_time: c[ix.entry_time], entry_price: c[ix.entry_price],
       exit_date: isoDate(c[ix.exit_date], where), exit_time: c[ix.exit_time], exit_price: c[ix.exit_price],
-      points: c[ix.points], pnl: c[ix.pnl], tag: ix.tag !== undefined ? c[ix.tag] || '' : '',
+      points: c[ix.points], pnl: c[ix.pnl], tag: ix.tag !== undefined ? c[ix.tag] || '' : '', qty: ix.qty !== undefined ? c[ix.qty] || '' : '',
     };
     if (leg.pnl !== '' && !Number.isFinite(+leg.pnl)) throw new Error(`${where}: pnl "${leg.pnl}" is not a number`);
     if (!map.has(leg.trade)) map.set(leg.trade, { legs: [], pnl: 0, exit: '' });
@@ -102,8 +102,8 @@ const footer = rd('src/shell/footer.html').replace(/(<[^>]*class="ver"[^>]*>)[^<
 
 // data the page fetches: daily P&L for every strategy (one small file), and the trade log per year
 write('data/series.json', JSON.stringify({ updated: cfg.site.updated, strategies: strategies.map(s => ({ id: s.id, name: s.name, capital: s.capital, start: s.series.start, days: s.series.days })) }));
-const CSV_HEAD = COLS.concat('tag').join(',');
-const legRow = l => [l.trade, l.instrument, l.side, l.entry_date, l.entry_time, l.entry_price, l.exit_date, l.exit_time, l.exit_price, l.points, l.pnl, l.tag].join(',');
+const CSV_HEAD = COLS.concat('tag', 'qty').join(',');
+const legRow = l => [l.trade, l.instrument, l.side, l.entry_date, l.entry_time, l.entry_price, l.exit_date, l.exit_time, l.exit_price, l.points, l.pnl, l.tag, l.qty].join(',');
 for (const s of strategies) {
   const byYear = new Map();
   for (const t of s.tradesList) { const y = t.exit.slice(0, 4); if (!byYear.has(y)) byYear.set(y, []); byYear.get(y).push(t); }
@@ -211,7 +211,7 @@ const DEFS = [
   ['Calmar ratio', 'Average yearly return divided by max drawdown.'],
   ['Profit factor', 'Total profit of winning trades divided by total loss of losing trades.'],
   ['Expectancy', 'Average profit or loss per trade, winners and losers together.'],
-  ['Trade', 'One position from entry to exit. A hedged spread (a short option and its bought hedge) counts as one trade.'],
+  ['Trade', 'One position from entry to exit. A single option bought or sold is one trade; a hedged spread (a short option and its bought hedge) also counts as one trade.'],
 ];
 const defsBlock = `<dl class="defs">${DEFS.map(d => `<div><dt>${d[0]}</dt><dd>${d[1]}</dd></div>`).join('')}</dl>`;
 
@@ -221,23 +221,32 @@ for (const s of strategies) {
   const eq = Ch.line({ dates: a.dates, lines: [{ values: a.equity }], area: true, fmt: C.inrShort, w: 1100, h: 360, label: `${s.name} cumulative profit and loss` });
   const uw = Ch.underwater({ dates: a.dates, values: a.dd, w: 1100, h: 180 });
   const yb = Ch.bars({ items: a.yearsB.map(y => ({ label: y.key, value: y.pnl / a.capital })), w: 420, h: 230, label: 'Return by calendar year' });
-  const title = `${s.name} backtest: Nifty options strategy, ${yrs(a)}`;
+  const title = `${s.name} backtest: ${s.kind || s.segment} strategy, ${yrs(a)}`;
   const desc = `${s.name} backtest on ${s.underlying} ${s.segment.toLowerCase()}, ${period(a)}: ${ts.count.toLocaleString('en-IN')} trades, equity curve, drawdowns, monthly returns and the full trade log.`;
   const others = strategies.filter(o => o.id !== s.id);
   const body = `
-<section class="wrap head">
+<section class="wrap head two">
   ${crumb([['Home', '/'], ['Backtests', BASE], [s.name, BASE + s.id + '/']])}
-  <p class="eyebrow">Backtest · ${esc(s.exchange)} · ${esc(s.underlying)} · ${esc(s.segment)}</p>
-  <h1>${esc(s.name)} backtest: ${esc(s.tagline.charAt(0).toLowerCase() + s.tagline.slice(1))}</h1>
-  <p class="lede">${esc(s.summary)}</p>
-  <ul class="chips">
-    <li><span>Capital</span><b class="num">${C.inr(s.capital)}</b></li>
-    <li><span>Period</span><b class="num">${period(a)}</b></li>
-    <li><span>Trades</span><b class="num">${ts.count.toLocaleString('en-IN')}</b></li>
-    <li><span>Style</span><b>${esc(s.style)}</b></li>
-    <li><span>Holding</span><b>${esc(s.holding)}</b></li>
-  </ul>
-  <div class="cta"><a class="btn" href="${cfg.site.cta.href}">${esc(cfg.site.cta.label)}</a><a class="btn ghost" href="${BASE}?mix=${s.id}:1#combine">Combine with other strategies</a></div>
+  <div class="head-main">
+    <p class="eyebrow">Backtest · ${esc(s.exchange)} · ${esc(s.underlying)} · ${esc(s.segment)}</p>
+    <h1>${esc(s.name)} backtest: ${esc(s.tagline.charAt(0).toLowerCase() + s.tagline.slice(1))}</h1>
+    <p class="lede">${esc(s.summary)}</p>${s.risk ? `\n    <p class="risk"><b>Risk.</b> ${esc(s.risk)}</p>` : ''}
+    <div class="cta"><a class="btn" href="${cfg.site.cta.href}">${esc(cfg.site.cta.label)}</a><a class="btn ghost" href="${BASE}?mix=${s.id}:1#combine">Combine with other strategies</a></div>
+  </div>
+  <aside class="head-side card" aria-label="Test set-up">
+    <p class="side-h">Test set-up</p>
+    ${Ch.spark(a.equity, 340, 84)}
+    <p class="side-cap"><span>Cumulative profit and loss</span><b class="num ${tone(a.net)}">${C.inrShort(a.net)}</b></p>
+    <dl class="rows">
+      ${row('Market', esc(s.exchange) + ' · ' + esc(s.underlying))}
+      ${row('Segment', esc(s.segment))}
+      ${row('Style', esc(s.style))}
+      ${row('Holding', esc(s.holding))}
+      ${row('Capital', C.inr(s.capital))}
+      ${row('Period', period(a))}
+      ${row('Trades', ts.count.toLocaleString('en-IN'))}
+    </dl>
+  </aside>
 </section>
 
 <section class="wrap" data-strategy="${s.id}">
@@ -267,7 +276,7 @@ for (const s of strategies) {
       ${row('CAGR', C.pct(a.cagr))}
       ${row('Average yearly return', C.pct(a.annual))}
       ${row('Average winning month', C.signPct(a.avgUpMonth), 'pos')}
-      ${row('Average losing month', C.signPct(a.avgDownMonth), 'neg')}
+      ${a.avgDownMonth ? row('Average losing month', C.signPct(a.avgDownMonth), 'neg') : row('Average losing month', 'none in this period')}
     </dl></div>
     <div class="card"><h2>Risk</h2><dl class="rows">
       ${row('Max drawdown', C.pct(a.maxDD), 'neg')}
@@ -349,17 +358,26 @@ for (const s of strategies) {
   ];
   const metricRow = (label, f) => `<tr><th scope="row">${label}</th>${strategies.map(s => `<td class="num">${f(s)}</td>`).join('')}</tr>`;
   const body = `
-<section class="wrap head hero">
+<section class="wrap head hero two">
   ${crumb([['Home', '/'], ['Backtests', BASE]])}
+  <div class="head-main">
   <p class="eyebrow">Firefly · Published backtests · ${start.slice(0, 4)}–${end.slice(0, 4)}</p>
   <h1>Firefly backtest results: every trade, published</h1>
-  <p class="lede">The rules behind Firefly's algo trading, run on ${a_years(start, end)} years of Nifty options data and published trade by trade: equity curves, drawdowns, monthly returns with the losing months, and the full trade logs. Combine strategies and the numbers recalculate in your browser.</p>
+  <p class="lede">The rules behind Firefly's algo trading, run on ${a_years(start, end)} years of index, stock and commodity options data and published trade by trade: equity curves, drawdowns, monthly returns with the losing months, and the full trade logs. Combine strategies and the numbers recalculate in your browser.</p>
   <dl class="stats">
     <div><dt>trades published</dt><dd class="num">${totalTrades.toLocaleString('en-IN')}</dd></div>
     <div><dt>strategies</dt><dd class="num">${strategies.length}</dd></div>
     <div><dt>test period</dt><dd class="num">${C.fmtMonth(start.slice(0, 7))} – ${C.fmtMonth(end.slice(0, 7))}</dd></div>
   </dl>
   <div class="cta"><a class="btn" href="#combine">Combine strategies</a><a class="btn ghost" href="/methodology/">How Firefly works</a></div>
+  </div>
+  <aside class="head-side card" aria-label="Published strategies">
+    <p class="side-h">Published strategies</p>
+    <ul class="slist">
+      ${strategies.map(s => `<li><a href="${BASE}${s.id}/"><span><b>${esc(s.name)}</b><small>${esc(s.segment)} · ${esc(s.style)}</small></span><span class="num"><b class="${tone(s.a.ret)}">${C.signPct(s.a.ret, 0)}</b><small>${C.fmtMonth(s.a.start.slice(0, 7))} – ${C.fmtMonth(s.a.end.slice(0, 7))}</small></span></a></li>`).join('\n      ')}
+    </ul>
+    <p class="note">Total return on each strategy's own capital and period. Hypothetical, before costs.</p>
+  </aside>
 </section>
 
 <section class="wrap">
@@ -368,8 +386,9 @@ for (const s of strategies) {
 </section>
 
 <section class="wrap">
-  <div class="card"><div class="card-h"><h2>Side by side</h2><p class="hint">${C.fmtDate(start)} – ${C.fmtDate(end)} · fixed capital, not compounded</p></div>
+  <div class="card"><div class="card-h"><h2>Side by side</h2><p class="hint">Each over its own test period · fixed capital, not compounded</p></div>
   <div class="scroll"><table class="cmp"><thead><tr><th></th>${strategies.map(s => `<th scope="col"><a href="${BASE}${s.id}/">${esc(s.name)}</a></th>`).join('')}</tr></thead><tbody>
+    ${metricRow('Period', s => `${C.fmtMonth(s.a.start.slice(0, 7))} – ${C.fmtMonth(s.a.end.slice(0, 7))}`)}
     ${metricRow('Capital', s => C.inr(s.capital))}
     ${metricRow('Net profit', s => C.inr(s.a.net))}
     ${metricRow('Total return', s => C.signPct(s.a.ret, 1))}
@@ -397,6 +416,7 @@ for (const s of strategies) {
         <span class="num cap" data-cap>${C.inrShort(s.capital)}</span></div>`).join('')}
       <div class="pick total"><b>Combined capital</b><span class="num" data-total>${C.inrShort(combo.capital)}</span></div>
       <p class="note">1× is the capital each backtest was run on. Position sizes scale with the multiplier.</p>
+      <p class="note">The strategies were tested over different periods (see the table above). A combination runs from the earliest start to the latest end, and a strategy adds nothing outside its own period, so compare like with like.</p>
     </form>
     <div class="result">
       <dl class="kpis five" data-ckpis>
@@ -441,8 +461,8 @@ for (const s of strategies) {
   function a_years(s, e) { return Math.round((new Date(e) - new Date(s)) / 864e5 / 365.25); }
   write('index.html', page({
     slug: '', kind: 'backtests', body,
-    title: 'Firefly backtest results: Nifty options algo trading',
-    desc: `Firefly algo trading backtests, trade by trade: ${totalTrades.toLocaleString('en-IN')} Nifty options trades, ${start.slice(0, 4)}–${end.slice(0, 4)}, with equity curves, drawdowns and monthly returns.`,
+    title: 'Firefly backtest results: options algo trading, India',
+    desc: `Firefly algo trading backtests, trade by trade: ${totalTrades.toLocaleString('en-IN')} Nifty, stock and commodity options trades, ${start.slice(0, 4)}–${end.slice(0, 4)}, with equity curves, drawdowns and monthly returns.`,
     ld: [ORG, crumbLd([['Home', '/'], ['Backtests', BASE]]),
       { '@type': 'CollectionPage', name: 'Firefly backtest results', url: ORIGIN + BASE, dateModified: cfg.site.updated, publisher: { '@id': ORG['@id'] }, hasPart: strategies.map(s => ({ '@type': 'Dataset', name: `${s.name} backtest`, url: ORIGIN + BASE + s.id + '/' })) },
       { '@type': 'FAQPage', mainEntity: faqs.map(f => ({ '@type': 'Question', name: f[0], acceptedAnswer: { '@type': 'Answer', text: f[1] } })) }],

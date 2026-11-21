@@ -24,9 +24,15 @@ backtests/
 
 1. Make `backtests/<id>/`. The folder name is the URL (`/backtests/<id>/`): lower-case letters, digits and hyphens.
 2. Put the trade log in it as one or more `.csv` files (format below).
+   An Excel export from the backtest engine converts with
+   `python3 tools/xlsx-to-csv.py "export.xlsx" backtests/<id>/trades.csv` (raw exports, as a workbook or as CSV, and the
+   analysed workbook's Trades sheet are recognised; P&L is taken gross, before brokerage; trades still
+   open at the end of the test are left out and counted in the output).
 3. Copy a `strategy.json` from another folder and edit it. `name`, `tagline`, `summary`, `capital`,
-   `exchange`, `underlying`, `segment`, `style` and `holding` are required; `order` sets its position
-   on the overview (lowest first).
+   `exchange`, `underlying`, `segment`, `style` and `holding` are required. Optional: `order` (position
+   on the overview, lowest first), `kind` (the phrase used in the page title, e.g. `Nifty options`;
+   defaults to `segment`) and `risk` (a highlighted risk note under the summary — use it for
+   unhedged selling, or anything a reader must know before the numbers).
 4. `node build.mjs`. The strategy gets its own page and appears on the overview, in the side-by-side
    table, in the combine tool and in the sitemap.
 
@@ -48,9 +54,10 @@ the same `trade` value.
 | `side` | `BUY` or `SHORT` |
 | `entry_date`, `exit_date` | `YYYY-MM-DD` (or `DD-MM-YYYY`) |
 | `entry_time`, `exit_time` | `HH:MM:SS` |
-| `entry_price`, `exit_price` | Per unit |
-| `points` | Per-unit profit or loss of the leg |
+| `entry_price`, `exit_price` | Per unit. May be left blank when the export has no prices |
+| `points` | Per-unit profit or loss of the leg. May be blank |
 | `pnl` | Rupee profit or loss. Fill it on one leg of the trade (or on each leg); a trade's P&L is the sum |
+| `qty` | Optional. Quantity of the leg, shown in the trade log |
 | `tag` | Optional, not shown yet |
 
 No thousands separators and no quoted fields. The build stops with the file and line number if a

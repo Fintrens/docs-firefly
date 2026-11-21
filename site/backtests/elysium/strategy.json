@@ -8,5 +8,6 @@
   "segment": "Index options",
   "style": "Hedged option selling",
   "holding": "Intraday and overnight",
-  "order": 1
+  "order": 1,
+  "kind": "Nifty options"
 }

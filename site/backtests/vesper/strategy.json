@@ -1,0 +1,14 @@
+{
+  "order": 6,
+  "name": "Vesper",
+  "kind": "stock options",
+  "tagline": "Multi-day option buying on NSE stocks",
+  "summary": "Vesper buys one stock option on each signal across 43 NSE stocks and holds it overnight, typically for a few days: a call when Firefly's rules turn up, a put when they turn down. It trades far less often than the intraday strategies, and exits on a trend reversal, a target or a stop.",
+  "risk": "Option buyers can lose the whole premium paid on a trade. These results are before brokerage, taxes and slippage; stock options trade with wider spreads than index options, so real fills would be worse than the prices used here. At its busiest this backtest had about ₹3.3 lakh of premium open at once, more than the ₹2 lakh starting capital; the percentage figures are measured on the starting capital.",
+  "capital": 200000,
+  "exchange": "NSE",
+  "underlying": "43 NSE stocks",
+  "segment": "Stock options",
+  "style": "Option buying",
+  "holding": "Overnight, several days"
+}

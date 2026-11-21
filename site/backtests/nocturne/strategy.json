@@ -1,0 +1,14 @@
+{
+  "order": 7,
+  "name": "Nocturne",
+  "kind": "commodity options",
+  "tagline": "Option selling on MCX crude oil, natural gas and gold",
+  "summary": "Nocturne sells one option at a time on each of three MCX commodities: crude oil, natural gas and gold mini. It sells a put when Firefly's rules turn up and a call when they turn down, and holds through the evening session and overnight, from a few hours to a few days, until the trend reverses or a target or stop is hit.",
+  "risk": "Every position is a short option with no hedge, so the loss on a trade is not capped, and commodity prices can gap between sessions. Selling options needs exchange margin far above the premium received. Results are before brokerage, taxes and slippage; commodity options trade with wide spreads, so real fills would be worse than the prices used here.",
+  "capital": 1000000,
+  "exchange": "MCX",
+  "underlying": "MCX commodities",
+  "segment": "Commodity options",
+  "style": "Option selling, unhedged",
+  "holding": "Hours to a few days"
+}

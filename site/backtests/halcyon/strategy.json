@@ -1,0 +1,14 @@
+{
+  "order": 5,
+  "name": "Halcyon",
+  "kind": "stock options",
+  "tagline": "Intraday option selling on NSE stocks",
+  "summary": "Halcyon sells one stock option on each signal across 46 NSE stocks: a put when Firefly's rules turn up, a call when they turn down. Positions are opened during the session and almost always closed the same day, on a trend reversal, a stop or the end of the day.",
+  "risk": "Every position is a short option with no hedge, so the loss on a trade is not capped. Selling options needs exchange margin far above the premium received: at its busiest this backtest held 44 short positions on about ₹2.9 crore of stock at once. Results are before brokerage, taxes and slippage.",
+  "capital": 1000000,
+  "exchange": "NSE",
+  "underlying": "46 NSE stocks",
+  "segment": "Stock options",
+  "style": "Option selling, unhedged",
+  "holding": "Intraday"
+}

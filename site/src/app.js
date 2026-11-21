@@ -108,7 +108,7 @@
     const dt = (d, t) => `${C.fmtDate(d)}<small>${t.slice(0, 5)}</small>`;
     function render() {
       const pages = Math.ceil(rows.length / PER);
-      tbody.innerHTML = rows.slice(page * PER, page * PER + PER).map(t => `<tr><td class="num">${dt(t.xd, t.xt)}</td><td class="num">${dt(t.ed, t.et)}</td><td>${t.legs.map(l => `<div class="leg"><span class="side ${l.side === 'BUY' ? 'b' : 's'}">${esc(l.side)}</span><span class="num">${esc(instrument(l.inst))}</span><span class="num px">${(+l.ep).toFixed(2)} → ${(+l.xp).toFixed(2)}</span></div>`).join('')}</td><td class="num r ${tone(t.pts)}">${t.pts.toFixed(2)}</td><td class="num r ${tone(t.pnl)}"><b>${C.inr(t.pnl)}</b></td></tr>`).join('');
+      tbody.innerHTML = rows.slice(page * PER, page * PER + PER).map(t => `<tr><td class="num">${dt(t.xd, t.xt)}</td><td class="num">${dt(t.ed, t.et)}</td><td>${t.legs.map(l => `<div class="leg"><span class="side ${l.side === 'BUY' ? 'b' : 's'}">${esc(l.side)}</span><span class="num">${esc(instrument(l.inst))}</span>${l.qty ? `<span class="num px">× ${(+l.qty).toLocaleString('en-IN')}</span>` : ''}<span class="num px">${l.ep !== '' && l.xp !== '' ? (+l.ep).toFixed(2) + ' → ' + (+l.xp).toFixed(2) : ''}</span></div>`).join('')}</td><td class="num r ${t.hasPts ? tone(t.pts) : ''}">${t.hasPts ? t.pts.toFixed(2) : '–'}</td><td class="num r ${tone(t.pnl)}"><b>${C.inr(t.pnl)}</b></td></tr>`).join('');
       pager.hidden = pages < 2; $('[data-page]', pager).textContent = `${page + 1} / ${pages} · ${rows.length.toLocaleString('en-IN')} trades`;
       $('[data-prev]', pager).disabled = page === 0; $('[data-next]', pager).disabled = page >= pages - 1;
     }
@@ -119,10 +119,10 @@
         const L = txt.trim().split('\n'), h = L[0].split(','), ix = Object.fromEntries(h.map((k, i) => [k, i])), map = new Map();
         for (const line of L.slice(1)) {
           const c = line.split(','), k = c[ix.trade];
-          if (!map.has(k)) map.set(k, { legs: [], pnl: 0, pts: 0, xd: '', xt: '', ed: c[ix.entry_date], et: c[ix.entry_time] });
+          if (!map.has(k)) map.set(k, { legs: [], pnl: 0, pts: 0, hasPts: false, xd: '', xt: '', ed: c[ix.entry_date], et: c[ix.entry_time] });
           const t = map.get(k);
-          t.legs.push({ inst: c[ix.instrument], side: c[ix.side], ep: c[ix.entry_price], xp: c[ix.exit_price] });
-          t.pnl += +c[ix.pnl] || 0; t.pts += +c[ix.points] || 0;
+          t.legs.push({ inst: c[ix.instrument], side: c[ix.side], ep: c[ix.entry_price], xp: c[ix.exit_price], qty: ix.qty !== undefined ? c[ix.qty] : '' });
+          t.pnl += +c[ix.pnl] || 0; if (c[ix.points] !== '') { t.pts += +c[ix.points] || 0; t.hasPts = true; }
           if (c[ix.exit_date] + c[ix.exit_time] > t.xd + t.xt) { t.xd = c[ix.exit_date]; t.xt = c[ix.exit_time]; }
           if (c[ix.entry_date] + c[ix.entry_time] < t.ed + t.et) { t.ed = c[ix.entry_date]; t.et = c[ix.entry_time]; }
         }

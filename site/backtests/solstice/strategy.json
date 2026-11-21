@@ -1,0 +1,14 @@
+{
+  "order": 4,
+  "name": "Solstice",
+  "kind": "stock options",
+  "tagline": "Intraday option buying on NSE stocks",
+  "summary": "Solstice buys one stock option on each signal across 46 NSE stocks: a call when Firefly's rules turn up, a put when they turn down. Positions are opened during the session and almost always closed the same day, on a trend reversal, a target, a stop or the end of the day.",
+  "risk": "Option buyers can lose the whole premium paid on a trade. These results are before brokerage, taxes and slippage; stock options trade with wider spreads than index options, so real fills would be worse than the prices used here. At its busiest this backtest had 44 positions and about ₹9.2 lakh of premium open at once, more than the ₹2 lakh starting capital; the percentage figures are measured on the starting capital.",
+  "capital": 200000,
+  "exchange": "NSE",
+  "underlying": "46 NSE stocks",
+  "segment": "Stock options",
+  "style": "Option buying",
+  "holding": "Intraday"
+}
